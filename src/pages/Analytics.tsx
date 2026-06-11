@@ -288,7 +288,7 @@ export default function Analytics() {
                   isAnimationActive
                   animationDuration={900}
                   cursor="pointer"
-                  onClick={(entry: MesData) => toggleMes(entry.mes)}
+                  onClick={(d) => { const m = d.payload as MesData; if (m) toggleMes(m.mes) }}
                 >
                   {porMesData.map(entry => {
                     const isSelected = selectedMes === entry.mes
@@ -334,7 +334,7 @@ export default function Analytics() {
                   isAnimationActive
                   animationDuration={900}
                   cursor="pointer"
-                  onClick={(entry: MesData) => toggleMes(entry.mes)}
+                  onClick={(d) => { const m = d.payload as MesData; if (m) toggleMes(m.mes) }}
                 >
                   {porMesData.map(entry => {
                     const isSelected = selectedMes === entry.mes
@@ -393,7 +393,7 @@ export default function Analytics() {
                       isAnimationActive
                       animationDuration={900}
                       cursor="pointer"
-                      onClick={(entry: TopItem) => toggleProducto(entry.nombre)}
+                      onClick={(d) => { const t = d.payload as TopItem; if (t) toggleProducto(t.nombre) }}
                     >
                       {topProdData.map((entry, i) => {
                         const isSelected = selectedProducto === entry.nombre
@@ -450,7 +450,7 @@ export default function Analytics() {
                       isAnimationActive
                       animationDuration={900}
                       cursor="pointer"
-                      onClick={(entry: TopItem) => toggleCliente(entry.nombre)}
+                      onClick={(d) => { const t = d.payload as TopItem; if (t) toggleCliente(t.nombre) }}
                     >
                       {topCliData.map((entry, i) => {
                         const isSelected = selectedCliente === entry.nombre

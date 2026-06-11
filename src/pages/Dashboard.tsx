@@ -32,7 +32,7 @@ const fmtFecha = (iso: string) => {
 
 function useCountUp(target: number, duration = 900): number {
   const [val, setVal] = useState(0)
-  const raf = useRef<number>()
+  const raf = useRef<number | undefined>(undefined)
   useEffect(() => {
     const t0 = performance.now()
     const tick = (now: number) => {
@@ -243,7 +243,7 @@ function ZonasChart({
           isAnimationActive
           animationDuration={900}
           cursor="pointer"
-          onClick={(payload: ZonaItem) => onZonaClick(payload.zona_id)}
+          onClick={(d) => { const z = d.payload as ZonaItem; if (z) onZonaClick(z.zona_id) }}
         >
           {data.map(entry => {
             const isSelected = selectedZona === entry.zona_id
