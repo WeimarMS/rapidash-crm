@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { fetchAllUsers, createUser, toggleUserActivo, type FullUser, type Rol, type NewUserInput } from '../lib/auth'
-import { supabase, supabaseAdmin } from '../lib/supabase'
+import { fetchAllUsers, createUser, toggleUserActivo } from '../lib/adminApi'
+import type { FullUser, Rol, NewUserInput } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -176,7 +177,6 @@ export default function Usuarios() {
   }
 
   useEffect(() => {
-    if (!supabaseAdmin) { setLoading(false); return }
     fetchAllUsers()
       .then(d => { setUsers(d); setLoading(false) })
       .catch(e => { setError(e.message); setLoading(false) })
@@ -205,8 +205,6 @@ export default function Usuarios() {
   const admins = users.filter(u => u.rol === 'admin').length
   const activos = users.filter(u => u.activo).length
 
-  const noServiceRole = !supabaseAdmin
-
   return (
     <>
       <header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between">
@@ -214,56 +212,34 @@ export default function Usuarios() {
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Usuarios</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
         </div>
-        {!noServiceRole && (
-          <button onClick={() => setShowNuevo(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-            style={{ background: '#1e40af' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
-            Nuevo usuario
-          </button>
-        )}
+        <button onClick={() => setShowNuevo(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+          style={{ background: '#1e40af' }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
+          Nuevo usuario
+        </button>
       </header>
 
       <main className="flex-1 px-8 py-6 space-y-5 max-w-5xl w-full mx-auto">
-
-        {/* No service_role warning */}
-        {noServiceRole && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 flex items-start gap-3">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5">
-              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-            <div>
-              <p className="text-sm font-bold text-amber-800">Service Role Key no configurada</p>
-              <p className="text-xs text-amber-700 mt-0.5">
-                Agrega <code className="bg-amber-100 px-1 rounded font-mono">VITE_SUPABASE_SERVICE_ROLE_KEY</code> en <code className="bg-amber-100 px-1 rounded font-mono">.env.local</code> para
-                habilitar la gestión de usuarios. Consíguela en Supabase Dashboard → Project Settings → API.
-              </p>
-            </div>
-          </div>
-        )}
 
         {error && (
           <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm">{error}</div>
         )}
 
         {/* Stats */}
-        {!noServiceRole && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {loading ? Array.from({length:4}).map((_,i) => <Skeleton key={i} className="h-16" />) : (
-              <>
-                <StatCard label="Total usuarios" value={users.length} color="#1e40af" />
-                <StatCard label="Activos" value={activos} color="#15803d" />
-                <StatCard label="Administradores" value={admins} color="#7c3aed" />
-                <StatCard label="Inactivos" value={users.length - activos} color="#64748b" />
-              </>
-            )}
-          </div>
-        )}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {loading ? Array.from({length:4}).map((_,i) => <Skeleton key={i} className="h-16" />) : (
+            <>
+              <StatCard label="Total usuarios" value={users.length} color="#1e40af" />
+              <StatCard label="Activos" value={activos} color="#15803d" />
+              <StatCard label="Administradores" value={admins} color="#7c3aed" />
+              <StatCard label="Inactivos" value={users.length - activos} color="#64748b" />
+            </>
+          )}
+        </div>
 
         {/* Table */}
-        {!noServiceRole && (
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div className="px-6 py-3.5 border-b border-slate-100">
               <p className="text-xs font-semibold text-slate-500">
                 {loading ? '…' : `${users.length} usuario${users.length !== 1 ? 's' : ''} del sistema`}
@@ -339,7 +315,6 @@ export default function Usuarios() {
               </table>
             </div>
           </div>
-        )}
       </main>
 
       {showNuevo && (
