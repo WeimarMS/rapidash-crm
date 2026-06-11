@@ -1,0 +1,16 @@
+# ============================================================
+# RapiDash CRM — Netlify config
+# ============================================================
+
+[build]
+  command   = "npm run build"
+  publish   = "dist"
+  functions = "netlify/functions"
+
+# SPA fallback para react-router (BrowserRouter).
+# Las rutas /.netlify/functions/* las resuelve Netlify antes de este
+# catch-all, así que no interfiere con la Function admin-users.
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200

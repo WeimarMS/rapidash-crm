@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', 'Courier New', monospace;
+}
+
+:root {
+  --rd-navy:  #0f172a;
+  --rd-blue:  #1e40af;
+  --rd-green: #15803d;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { margin: 0; padding: 0; height: 100%; }
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: #f1f5f9;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Only for truly monospaced data: order codes (RD-2025-XXXX) */
+.font-data { font-family: 'DM Mono', 'Courier New', monospace; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes barExpand {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes numPop {
+  0%   { opacity: 0; transform: scale(0.85) translateY(6px); }
+  60%  { transform: scale(1.04) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.anim-card { animation: fadeSlideUp 0.45s cubic-bezier(0.16,1,0.3,1) both; }
+.anim-num  { animation: numPop 0.55s cubic-bezier(0.16,1,0.3,1) both; }
+.anim-bar  { animation: barExpand 0.9s cubic-bezier(0.16,1,0.3,1) both; transform-origin: left; }
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.slide-in-right { animation: slideInRight 0.28s cubic-bezier(0.16,1,0.3,1); }
+
+.font-data { font-family: 'DM Mono', 'Courier New', monospace; }
