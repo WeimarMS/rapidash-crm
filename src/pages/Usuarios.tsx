@@ -145,7 +145,7 @@ function NuevoUsuarioModal({ zonas, onClose, onSuccess }: {
         <div>
           <label className={LBL}>Usuario *</label>
           <input type="text" value={form.usuario} onChange={setText('usuario')}
-            placeholder="Ej. carlos.mendoza" className={INP}
+            placeholder="ej. ejemplo@tumail.com" className={INP}
             onKeyDown={e => { if (e.key === ' ') e.preventDefault() }} />
         </div>
         <div className="grid grid-cols-2 gap-3">
