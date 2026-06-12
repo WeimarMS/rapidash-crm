@@ -235,7 +235,7 @@ CREATE TRIGGER trg_profiles_no_self_escalation
 
 
 -- ============================================================
--- 5. GRANTS — anon sin acceso a tablas, authenticated con acceso
+-- 5. GRANTS — anon sin acceso; authenticated y service_role con acceso
 -- ============================================================
 -- El flujo de login usa el endpoint /auth (no las tablas), así que
 -- anon no necesita ningún privilegio sobre el schema de negocio.
@@ -247,6 +247,13 @@ REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon;
 GRANT USAGE ON SCHEMA public TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+
+-- service_role lo usa SOLO la Netlify Function admin-users (en el servidor).
+-- Bypassa RLS, pero igual necesita el GRANT a nivel de tabla. Sin esto,
+-- la Function falla con "permission denied for table profiles".
+GRANT USAGE ON SCHEMA public TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
 
 
 -- ============================================================
@@ -274,3 +281,10 @@ ORDER BY tablename;
 SELECT table_name, privilege_type
 FROM information_schema.role_table_grants
 WHERE grantee = 'anon' AND table_schema = 'public';
+
+-- (d) service_role SÍ debe tener privilegios sobre profiles (la Function
+--     los necesita). Esta consulta debe devolver filas (SELECT/INSERT/…):
+SELECT privilege_type
+FROM information_schema.role_table_grants
+WHERE grantee = 'service_role' AND table_schema = 'public' AND table_name = 'profiles'
+ORDER BY privilege_type;
