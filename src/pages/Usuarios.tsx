@@ -141,9 +141,9 @@ function NuevoUsuarioModal({ zonas, onClose, onSuccess }: {
 
   return (
     <Modal title="Nuevo usuario" onClose={onClose}>
-      <div className="space-y-3">
+      <form className="space-y-3" autoComplete="off" onSubmit={e => e.preventDefault()}>
         <div>
-          <label className={LBL}>Usuario * <span className="text-slate-400 font-normal">(sin @rapidash.bo)</span></label>
+          <label className={LBL}>Usuario *</label>
           <input type="text" value={form.usuario} onChange={setText('usuario')}
             placeholder="Ej. carlos.mendoza" className={INP}
             onKeyDown={e => { if (e.key === ' ') e.preventDefault() }} />
@@ -162,7 +162,7 @@ function NuevoUsuarioModal({ zonas, onClose, onSuccess }: {
           <label className={LBL}>Contraseña * <span className="text-slate-400 font-normal">(mín. 8 caracteres)</span></label>
           <div className="relative">
             <input type={showPwd ? 'text' : 'password'} value={form.password} onChange={setText('password')}
-              placeholder="••••••••" className={`${INP} pr-10`} />
+              autoComplete="new-password" placeholder="••••••••" className={`${INP} pr-10`} />
             <button type="button" tabIndex={-1} onClick={() => setShowPwd(v => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
               {showPwd
@@ -179,7 +179,7 @@ function NuevoUsuarioModal({ zonas, onClose, onSuccess }: {
         </div>
         <RolZonaFields rol={form.rol} zonaId={form.zona_id} zonas={zonas}
           onRol={r => setForm(p => ({ ...p, rol: r }))} onZona={z => setForm(p => ({ ...p, zona_id: z }))} />
-      </div>
+      </form>
 
       {err && <p className="mt-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{err}</p>}
 
