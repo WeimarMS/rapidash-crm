@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell,
+  Tooltip, ResponsiveContainer, Cell, LabelList,
 } from 'recharts'
 import {
   fetchDashboardRaw,
@@ -225,7 +225,7 @@ function ZonasChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data} margin={{ top: 4, right: 4, left: -28, bottom: 0 }} barCategoryGap="30%">
+      <BarChart data={data} margin={{ top: 18, right: 4, left: -28, bottom: 0 }} barCategoryGap="30%">
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
         <XAxis
           dataKey="zona"
@@ -258,6 +258,11 @@ function ZonasChart({
               />
             )
           })}
+          <LabelList
+            dataKey="pedidos"
+            position="top"
+            style={{ fontSize: 11, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fill: '#475569', fontWeight: 700 }}
+          />
         </Bar>
       </BarChart>
     </ResponsiveContainer>

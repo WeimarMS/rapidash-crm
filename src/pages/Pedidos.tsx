@@ -347,6 +347,23 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(prev => ({ ...prev, [k]: e.target.value }))
 
+  // Al elegir cliente: autocompletar su zona y resetear repartidor
+  const handleClienteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const clienteId = e.target.value
+    const zonaId = opts?.clientes.find(c => c.id === clienteId)?.zona_id ?? ''
+    setForm(prev => ({ ...prev, cliente_id: clienteId, zona_id: zonaId, repartidor_id: '' }))
+  }
+
+  // Cambio manual de zona también resetea el repartidor (puede quedar fuera de zona)
+  const handleZonaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setForm(prev => ({ ...prev, zona_id: e.target.value, repartidor_id: '' }))
+  }
+
+  // Repartidores activos de la zona seleccionada (todos si no hay zona)
+  const repartidoresZona = opts
+    ? (form.zona_id ? opts.repartidores.filter(r => r.zona_id === form.zona_id) : opts.repartidores)
+    : []
+
   const handleSubmit = async () => {
     if (!form.cliente_id || !form.zona_id) { setErr('Cliente y zona son obligatorios'); return }
     setErr(null); setSaving(true)
@@ -380,14 +397,14 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={LBL}>Cliente *</label>
-              <select value={form.cliente_id} onChange={set('cliente_id')} className={INP}>
+              <select value={form.cliente_id} onChange={handleClienteChange} className={INP}>
                 <option value="">— Seleccionar —</option>
                 {opts?.clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
               </select>
             </div>
             <div>
               <label className={LBL}>Zona *</label>
-              <select value={form.zona_id} onChange={set('zona_id')} className={INP}>
+              <select value={form.zona_id} onChange={handleZonaChange} className={INP}>
                 <option value="">— Seleccionar —</option>
                 {opts?.zonas.map(z => <option key={z.id} value={z.id}>{z.nombre}</option>)}
               </select>
@@ -395,11 +412,19 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className={LBL}>Repartidor</label>
+              <label className={LBL}>
+                Repartidor
+                {form.zona_id && (
+                  <span className="font-normal text-slate-400"> · de la zona</span>
+                )}
+              </label>
               <select value={form.repartidor_id} onChange={set('repartidor_id')} className={INP}>
                 <option value="">— Sin asignar —</option>
-                {opts?.repartidores.map(r => <option key={r.id} value={r.id}>{r.nombre} {r.apellido}</option>)}
+                {repartidoresZona.map(r => <option key={r.id} value={r.id}>{r.nombre} {r.apellido}</option>)}
               </select>
+              {form.zona_id && repartidoresZona.length === 0 && (
+                <p className="mt-1 text-[11px] text-amber-600">Sin repartidores activos en esta zona</p>
+              )}
             </div>
             <div>
               <label className={LBL}>Tipo de pago *</label>

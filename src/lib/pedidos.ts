@@ -99,21 +99,21 @@ export async function fetchPedidoItems(pedidoId: string): Promise<PedidoItem[]> 
 // ─── Form helpers ─────────────────────────────────────────────────────────────
 
 export interface PedidoFormOptions {
-  clientes:     { id: string; nombre: string }[]
-  repartidores: { id: string; nombre: string; apellido: string }[]
+  clientes:     { id: string; nombre: string; zona_id: string }[]
+  repartidores: { id: string; nombre: string; apellido: string; zona_id: string | null }[]
   zonas:        { id: string; nombre: string; color: string }[]
 }
 
 export async function fetchPedidoFormOptions(): Promise<PedidoFormOptions> {
   const [clientesRes, repartidoresRes, zonasRes] = await Promise.all([
-    supabase.from('clientes').select('id, nombre').eq('activo', true).order('nombre'),
-    supabase.from('repartidores').select('id, nombre, apellido').eq('activo', true).order('nombre'),
+    supabase.from('clientes').select('id, nombre, zona_id').eq('activo', true).order('nombre'),
+    supabase.from('repartidores').select('id, nombre, apellido, zona_id').eq('activo', true).order('nombre'),
     supabase.from('zonas').select('id, nombre, color').order('nombre'),
   ])
   if (clientesRes.error) throw new Error(clientesRes.error.message)
   return {
-    clientes:     (clientesRes.data     ?? []) as { id: string; nombre: string }[],
-    repartidores: (repartidoresRes.data ?? []) as { id: string; nombre: string; apellido: string }[],
+    clientes:     (clientesRes.data     ?? []) as { id: string; nombre: string; zona_id: string }[],
+    repartidores: (repartidoresRes.data ?? []) as { id: string; nombre: string; apellido: string; zona_id: string | null }[],
     zonas:        (zonasRes.data        ?? []) as { id: string; nombre: string; color: string }[],
   }
 }
