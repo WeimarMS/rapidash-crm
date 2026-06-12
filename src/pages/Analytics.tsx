@@ -163,12 +163,12 @@ function FilterSelect({ label, value, options, onChange }: {
   onChange: (v: string) => void
 }) {
   return (
-    <div className="relative">
+    <div className="relative w-full sm:w-auto">
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
         className={`
-          appearance-none pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer
+          appearance-none w-full sm:w-auto pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer
           focus:outline-none focus:ring-2 focus:ring-indigo-300
           ${value
             ? 'bg-indigo-600 text-white border-indigo-600'
@@ -298,6 +298,26 @@ function DateRangeSlider({ months, startIdx, endIdx, onChange }: {
         <span className="text-xs font-bold text-indigo-600 whitespace-nowrap">{fmt(months[endIdx])}</span>
       </div>
     </div>
+  )
+}
+
+// ─── Custom label for donut segments ─────────────────────────────────────────
+
+const RADIAN = Math.PI / 180
+const DonutLabel = ({ cx, cy, midAngle, outerRadius, value, percent, fill }: any) => {
+  if (!value) return null
+  const r = outerRadius + 16
+  const x = cx + r * Math.cos(-midAngle * RADIAN)
+  const y = cy + r * Math.sin(-midAngle * RADIAN)
+  return (
+    <text
+      x={x} y={y}
+      textAnchor={x > cx ? 'start' : 'end'}
+      dominantBaseline="central"
+      fontSize={10} fontWeight={700} fontFamily={FONT} fill={fill}
+    >
+      {fmtNum(value)} · {Math.round(percent * 100)}%
+    </text>
   )
 }
 
@@ -442,15 +462,15 @@ export default function Analytics() {
       {/* ── Header ── */}
       <header className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-slate-100 px-6 py-3">
         <div className="flex flex-col gap-3 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
             <div>
               <h1 className="text-lg font-extrabold tracking-tight text-slate-900">Analytics</h1>
               <p className="text-xs text-slate-400 mt-0.5">Centro de inteligencia de negocio</p>
             </div>
 
-            {/* Date range slider */}
+            {/* Date range slider: fila completa en móvil, inline en desktop */}
             {!loading && monthKeys.length > 1 && (
-              <div className="flex-1 max-w-lg">
+              <div className="w-full order-last lg:order-none lg:w-auto lg:flex-1 lg:max-w-lg">
                 <DateRangeSlider
                   months={monthKeys}
                   startIdx={dateStart}
@@ -467,29 +487,31 @@ export default function Analytics() {
             </span>
           </div>
 
-          {/* Filter bar */}
+          {/* Filter bar: grid 2 col en móvil, inline en desktop */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-slate-400 flex-shrink-0"><IconFilter /></span>
-            <FilterSelect
-              label="Zona" value={fZona}
-              options={zonaOptions}
-              onChange={setFZona}
-            />
-            <FilterSelect
-              label="Categoría" value={fCategoria}
-              options={CATEGORIAS.map(c => ({ value: c, label: CAT_LABELS[c] }))}
-              onChange={setFCategoria}
-            />
-            <FilterSelect
-              label="Repartidor" value={fRepartidor}
-              options={repOptions}
-              onChange={setFRepartidor}
-            />
-            <FilterSelect
-              label="Estado" value={fEstado}
-              options={ESTADOS_FILTRO.map(e => ({ value: e, label: ESTADO_LABELS[e] }))}
-              onChange={setFEstado}
-            />
+            <span className="text-slate-400 flex-shrink-0 hidden sm:block"><IconFilter /></span>
+            <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:flex-wrap sm:items-center">
+              <FilterSelect
+                label="Zona" value={fZona}
+                options={zonaOptions}
+                onChange={setFZona}
+              />
+              <FilterSelect
+                label="Categoría" value={fCategoria}
+                options={CATEGORIAS.map(c => ({ value: c, label: CAT_LABELS[c] }))}
+                onChange={setFCategoria}
+              />
+              <FilterSelect
+                label="Repartidor" value={fRepartidor}
+                options={repOptions}
+                onChange={setFRepartidor}
+              />
+              <FilterSelect
+                label="Estado" value={fEstado}
+                options={ESTADOS_FILTRO.map(e => ({ value: e, label: ESTADO_LABELS[e] }))}
+                onChange={setFEstado}
+              />
+            </div>
 
             {/* Active chips */}
             {fZona && (
@@ -645,9 +667,11 @@ export default function Analytics() {
                         dataKey="valor"
                         nameKey="estado"
                         cx="50%" cy="50%"
-                        innerRadius={52}
-                        outerRadius={80}
+                        innerRadius={40}
+                        outerRadius={62}
                         paddingAngle={2}
+                        label={<DonutLabel />}
+                        labelLine={{ stroke: '#cbd5e1', strokeWidth: 1 }}
                         isAnimationActive
                       >
                         {porEstadoData.map((entry: EstadoData, i: number) => (
@@ -664,7 +688,12 @@ export default function Analytics() {
                           <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: e.color }} />
                           <span className="text-slate-600 font-medium">{e.estado}</span>
                         </span>
-                        <span className="font-bold text-slate-800">{fmtNum(e.valor)}</span>
+                        <span className="font-bold text-slate-800">
+                          {fmtNum(e.valor)}
+                          <span className="font-normal text-slate-400 ml-1.5">
+                            ({kpiPedidos > 0 ? Math.round((e.valor / kpiPedidos) * 100) : 0}%)
+                          </span>
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -775,7 +804,7 @@ export default function Analytics() {
             ? <EmptyState onClear={clearFilters} />
             : (
               <ResponsiveContainer width="100%" height={260}>
-                <ComposedChart data={porZonaData} margin={{ top: 4, right: 20, left: -10, bottom: 0 }} barCategoryGap="28%">
+                <ComposedChart data={porZonaData} margin={{ top: 18, right: 20, left: -10, bottom: 0 }} barCategoryGap="22%">
                   <CartesianGrid {...gridProps} />
                   <XAxis dataKey="nombre" tick={{ ...axisStyle, fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis yAxisId="cnt" orientation="left"  tick={axisStyle} axisLine={false} tickLine={false} />
@@ -790,22 +819,30 @@ export default function Analytics() {
                     {porZonaData.map((z: ZonaComp, i: number) => (
                       <Cell key={z.nombre} fill={`${ZONA_COLORS[i % ZONA_COLORS.length]}40`} />
                     ))}
+                    <LabelList
+                      dataKey="pedidos"
+                      position="top"
+                      style={{ fontSize: 10, fontFamily: FONT, fill: '#64748b', fontWeight: 700 }}
+                    />
                   </Bar>
                   <Bar yAxisId="cnt" dataKey="entregados" name="Entregados"   radius={[4,4,0,0]} isAnimationActive>
                     {porZonaData.map((z: ZonaComp, i: number) => (
                       <Cell key={z.nombre} fill={ZONA_COLORS[i % ZONA_COLORS.length]} />
                     ))}
+                    <LabelList
+                      dataKey="entregados"
+                      position="top"
+                      style={{ fontSize: 10, fontFamily: FONT, fill: '#475569', fontWeight: 700 }}
+                    />
                   </Bar>
-                  <Line
-                    yAxisId="ing"
-                    type="monotone"
-                    dataKey="ingresos"
-                    name="Ingresos Bs."
-                    stroke="#f59e0b"
-                    strokeWidth={2}
-                    dot={{ r: 4, fill: '#f59e0b' }}
-                    isAnimationActive
-                  />
+                  <Bar yAxisId="ing" dataKey="ingresos" name="Ingresos Bs." fill="#f59e0b" radius={[4,4,0,0]} isAnimationActive>
+                    <LabelList
+                      dataKey="ingresos"
+                      position="top"
+                      formatter={(v: unknown) => `${((v as number)/1000).toFixed(1)}k`}
+                      style={{ fontSize: 10, fontFamily: FONT, fill: '#b45309', fontWeight: 700 }}
+                    />
+                  </Bar>
                 </ComposedChart>
               </ResponsiveContainer>
             )
