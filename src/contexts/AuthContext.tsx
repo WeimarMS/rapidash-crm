@@ -42,7 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function signIn(usuario: string, password: string) {
-    const email = `${usuario.trim().toLowerCase()}@rapidash.bo`
+    // Acepta email completo (si trae @) o usuario interno (le agrega el dominio).
+    const input = usuario.trim().toLowerCase()
+    const email = input.includes('@') ? input : `${input}@rapidash.bo`
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw new Error(error.message)
   }

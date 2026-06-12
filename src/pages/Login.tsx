@@ -55,7 +55,7 @@ export default function Login() {
             {/* Usuario */}
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-                Usuario
+                Usuario o email
               </label>
               <input
                 type="text"
@@ -63,7 +63,7 @@ export default function Login() {
                 autoFocus
                 value={usuario}
                 onChange={e => { setUsuario(e.target.value); setError(null) }}
-                placeholder="tu.usuario"
+                placeholder="tu.usuario o tu@email.com"
                 className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
               />
             </div>
