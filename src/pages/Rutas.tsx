@@ -311,7 +311,7 @@ export default function Rutas() {
                 onClick={()=>{setEstadoFilter('todos');setZonaFilter('todas');setSearch('')}}>Limpiar</button>
             )}
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
@@ -366,6 +366,53 @@ export default function Rutas() {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Vista cards en móvil */}
+          <div className="md:hidden">
+            {loading ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="px-6 py-16 text-center text-slate-400 text-sm">Sin rutas</div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {filtered.map(r => {
+                  const cfg = ESTADO_CFG[r.estado]
+                  const pct = r.total_pedidos > 0 ? Math.round((r.pedidos_entregados / r.total_pedidos) * 100) : 0
+                  const barColor = pct>=80?'#16a34a':pct>=50?'#d97706':'#2563eb'
+                  return (
+                    <div key={r.id} className="px-4 py-3.5 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-data text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">{r.codigo}</span>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
+                          <span className="w-1.5 h-1.5 rounded-full" style={{background:cfg.dot}} />{cfg.label}
+                        </span>
+                      </div>
+                      <p className="font-medium text-slate-800 text-sm truncate">{r.repartidor_nombre}</p>
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <span className="inline-flex items-center gap-1.5 font-semibold" style={{color:r.zona_color}}>
+                          <span className="w-2 h-2 rounded-full" style={{background:r.zona_color}} />{r.zona_nombre}
+                        </span>
+                        <span className="text-slate-400">
+                          {new Date(r.fecha).toLocaleDateString('es-BO',{day:'2-digit',month:'2-digit',year:'2-digit'})}
+                          {r.hora_inicio && ` · ${r.hora_inicio}${r.hora_fin ? `–${r.hora_fin}` : ''}`}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                          <div className="h-full rounded-full" style={{width:`${pct}%`,background:barColor}} />
+                        </div>
+                        <span className="text-xs font-bold text-slate-600 whitespace-nowrap">
+                          {r.pedidos_entregados}/{r.total_pedidos}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </main>

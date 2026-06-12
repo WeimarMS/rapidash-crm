@@ -502,7 +502,7 @@ export default function Clientes() {
             )}
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
@@ -581,6 +581,48 @@ export default function Clientes() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Vista cards en móvil */}
+          <div className="md:hidden">
+            {loading ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="px-6 py-16 text-center">
+                <p className="text-slate-400 text-sm">No se encontraron clientes</p>
+                <p className="text-slate-300 text-xs mt-1">Intenta con otros filtros</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {filtered.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => setSelected(c)}
+                    className="w-full text-left px-4 py-3.5 hover:bg-blue-50/30 active:bg-blue-50/50 transition-colors space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-slate-800 leading-tight min-w-0 truncate">{c.nombre}</p>
+                      <EstadoBadge activo={c.activo} />
+                    </div>
+                    {c.email && <p className="text-xs text-slate-400 truncate">{c.email}</p>}
+                    <div className="flex items-center justify-between gap-2">
+                      <TipoBadge tipo={c.tipo} />
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: c.zona_color }}>
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: c.zona_color }} />
+                        {c.zona_nombre}
+                      </span>
+                    </div>
+                    {(c.telefono || c.contacto_nombre) && (
+                      <p className="text-xs text-slate-500 truncate">
+                        {[c.contacto_nombre, c.telefono].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>

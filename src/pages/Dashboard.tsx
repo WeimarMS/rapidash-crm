@@ -334,7 +334,7 @@ export default function Dashboard() {
             <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700">
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Conectado
             </span>
@@ -500,7 +500,7 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
@@ -566,6 +566,45 @@ export default function Dashboard() {
                 }
               </tbody>
             </table>
+          </div>
+
+          {/* Vista cards en móvil */}
+          <div className="md:hidden">
+            {!raw ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+              </div>
+            ) : ultimosPedidos.length === 0 ? (
+              <div className="px-6 py-16 text-center">
+                <p className="text-slate-400 text-sm">Sin pedidos para el filtro actual</p>
+                <button onClick={clearFilters}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-800 mt-2 underline">
+                  Limpiar filtros
+                </button>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {ultimosPedidos.map(p => (
+                  <div key={p.id} className="px-4 py-3.5 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-data text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
+                        {p.codigo}
+                      </span>
+                      <EstadoBadge estado={p.estado} />
+                    </div>
+                    <p className="font-medium text-slate-800 text-sm truncate">{p.cliente_nombre}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: p.zona_color }}>
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.zona_color }} />
+                        {p.zona_nombre}
+                      </span>
+                      <span className="text-xs text-slate-400">{fmtFecha(p.fecha_pedido)}</span>
+                    </div>
+                    <p className="font-bold text-slate-900 text-sm">Bs. {fmtBs(p.total)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

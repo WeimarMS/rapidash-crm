@@ -88,10 +88,11 @@ const ROL_CFG: Record<Rol, { label: string; bg: string; text: string }> = {
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
-// Desktop (lg+): rail fijo de iconos de 64px.
+// Desktop (lg+): rail fijo con dos modos — colapsado (64px, solo iconos) y
+// expandido (224px, iconos + labels). El estado vive en Layout (localStorage).
 // Móvil: barra superior fija con hamburguesa que abre un drawer lateral.
 
-export default function Sidebar() {
+export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onToggle: () => void }) {
   const { profile } = useAuth()
   const rol         = profile?.rol ?? 'cliente'
   const visibleItems = NAV_ITEMS.filter(item => canAccess(rol, item.path))
@@ -107,31 +108,35 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ── Desktop rail ── */}
+      {/* ── Desktop rail (colapsado 64px / expandido 224px) ── */}
       <aside
-        className="hidden lg:flex fixed left-0 top-0 bottom-0 w-16 flex-col items-center py-5 gap-1 z-20"
+        className={`hidden lg:flex fixed left-0 top-0 bottom-0 ${expanded ? 'w-56' : 'w-16'} flex-col py-5 gap-1 z-20 transition-[width] duration-200 overflow-hidden`}
         style={{ background: '#0f172a' }}
       >
-        <div className="mb-5">
+        {/* Brand */}
+        <div className={`mb-5 flex items-center gap-2.5 ${expanded ? 'px-4' : 'justify-center'}`}>
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
             style={{ background: '#15803d' }}
           >
             RD
           </div>
+          {expanded && (
+            <span className="text-white font-extrabold tracking-tight whitespace-nowrap">RapiDash CRM</span>
+          )}
         </div>
 
-        <nav className="flex flex-col items-center gap-1 flex-1">
+        <nav className={`flex flex-col gap-1 flex-1 ${expanded ? 'px-3' : 'items-center'}`}>
           {visibleItems.map(({ label, path, icon }) => (
             <NavLink
               key={label}
               to={path}
               end={path === '/'}
-              title={label}
+              title={expanded ? undefined : label}
               className={({ isActive }) =>
-                `relative w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                  isActive ? 'text-white' : 'text-slate-500 hover:text-slate-300'
-                }`
+                `relative rounded-xl flex items-center transition-colors ${
+                  expanded ? 'gap-3 px-3 py-2.5 text-sm font-semibold' : 'w-10 h-10 justify-center'
+                } ${isActive ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`
               }
               style={({ isActive }) => isActive ? { background: 'rgba(30,64,175,0.4)' } : {}}
             >
@@ -144,13 +149,35 @@ export default function Sidebar() {
                     />
                   )}
                   {icon}
+                  {expanded && <span className="whitespace-nowrap">{label}</span>}
                 </>
               )}
             </NavLink>
           ))}
         </nav>
 
-        <UserMenu />
+        {/* Toggle colapsar/expandir */}
+        <div className={`mb-2 ${expanded ? 'px-3' : 'flex justify-center'}`}>
+          <button
+            onClick={onToggle}
+            title={expanded ? 'Colapsar menú' : 'Expandir menú'}
+            className={`rounded-xl flex items-center text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors ${
+              expanded ? 'gap-3 px-3 py-2.5 text-sm font-semibold w-full' : 'w-10 h-10 justify-center'
+            }`}
+          >
+            <svg
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+              className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+            {expanded && <span className="whitespace-nowrap">Colapsar</span>}
+          </button>
+        </div>
+
+        <div className={expanded ? 'px-4' : 'flex justify-center'}>
+          <UserMenu railWidth={expanded ? 224 : 64} />
+        </div>
       </aside>
 
       {/* ── Mobile top bar ── */}
@@ -283,7 +310,7 @@ function DrawerUserFooter() {
 
 // ─── User menu popup ──────────────────────────────────────────────────────────
 
-function UserMenu() {
+function UserMenu({ railWidth = 64 }: { railWidth?: number }) {
   const { profile, signOut } = useAuth()
   const [open, setOpen]      = useState(false)
   const btnRef               = useRef<HTMLButtonElement>(null)
@@ -322,7 +349,7 @@ function UserMenu() {
         <div
           ref={popupRef}
           className="fixed w-56 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50"
-          style={{ left: 64 + 12, bottom: 16, animation: 'fadeSlideUp 0.18s cubic-bezier(0.16,1,0.3,1)' }}
+          style={{ left: railWidth + 12, bottom: 16, animation: 'fadeSlideUp 0.18s cubic-bezier(0.16,1,0.3,1)' }}
         >
           {/* Profile */}
           <div className="px-4 py-3.5">

@@ -349,7 +349,7 @@ export default function Repartidores() {
           <div className="px-6 py-3.5 border-b border-slate-100">
             <p className="text-xs font-semibold text-slate-500">{loading ? '…' : `${filtered.length} repartidor${filtered.length!==1?'es':''}`}</p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
@@ -409,6 +409,61 @@ export default function Repartidores() {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Vista cards en móvil */}
+          <div className="md:hidden">
+            {loading ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="px-6 py-16 text-center">
+                <p className="text-slate-400 text-sm">No se encontraron repartidores</p>
+                <p className="text-slate-300 text-xs mt-1">Intenta con otros filtros</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {filtered.map(r => {
+                  const tasaColor = r.tasa_entrega>=80?'#16a34a':r.tasa_entrega>=60?'#d97706':'#dc2626'
+                  return (
+                    <button
+                      key={r.id}
+                      onClick={() => setSelected(r)}
+                      className="w-full text-left px-4 py-3.5 hover:bg-blue-50/30 active:bg-blue-50/50 transition-colors space-y-2"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-800 truncate">{r.nombre} {r.apellido}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">C.I. {r.ci}</p>
+                        </div>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold flex-shrink-0 ${r.activo?'bg-emerald-50 text-emerald-700':'bg-rose-50 text-rose-600'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${r.activo?'bg-emerald-500':'bg-rose-400'}`} />{r.activo?'Activo':'Inactivo'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{color:r.zona_color}}>
+                          <span className="w-2 h-2 rounded-full" style={{background:r.zona_color}} />{r.zona_nombre}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-600">
+                          {VEHICULO_ICON[r.vehiculo_tipo] ?? ''} {r.vehiculo_placa}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-slate-500">Pedidos: <strong className="text-slate-800">{r.pedidos_total}</strong></span>
+                        <span className="text-slate-500">Entregados: <strong className="text-emerald-700">{r.pedidos_entregados}</strong></span>
+                        <div className="flex items-center gap-1.5 flex-1 justify-end">
+                          <div className="w-14 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div className="h-full rounded-full" style={{width:`${r.tasa_entrega}%`,background:tasaColor}} />
+                          </div>
+                          <span className="font-bold" style={{color:tasaColor}}>{r.tasa_entrega}%</span>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </main>

@@ -243,7 +243,7 @@ export default function Productos() {
                 onClick={()=>{setCatFilter('todos');setSearch('');setSoloAlerta(false)}}>Limpiar filtros</button>
             )}
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
@@ -306,6 +306,62 @@ export default function Productos() {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Vista cards en móvil */}
+          <div className="md:hidden">
+            {loading ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="px-6 py-16 text-center text-slate-400 text-sm">Sin resultados</div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {filtered.map(p => {
+                  const cfg = CATEGORIA_CFG[p.categoria]
+                  const pct = p.stock_minimo > 0 ? Math.min(100, Math.round((p.stock_actual / p.stock_minimo) * 100)) : 100
+                  const barColor = p.stock_bajo ? '#dc2626' : p.stock_actual <= p.stock_minimo * 1.5 ? '#d97706' : '#16a34a'
+                  return (
+                    <div key={p.id} className="px-4 py-3.5 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p className="font-semibold text-slate-800 truncate">{p.nombre}</p>
+                          {p.cadena_frio && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-cyan-100 text-cyan-700 flex-shrink-0">❄ Frío</span>
+                          )}
+                        </div>
+                        {p.stock_bajo ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 flex-shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />Stock bajo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 flex-shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />OK
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
+                          <span className="w-1.5 h-1.5 rounded-full" style={{background:cfg.dot}} />{cfg.label}
+                        </span>
+                        <span className="font-semibold text-slate-800 text-sm">
+                          {fmtBs(p.precio_unitario)} <span className="text-xs font-normal text-slate-400 uppercase">/ {p.unidad}</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-400 font-semibold">Stock</span>
+                        <span className="font-bold text-slate-800 text-sm">{p.stock_actual}</span>
+                        <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                          <div className="h-full rounded-full" style={{width:`${pct}%`, background:barColor}} />
+                        </div>
+                        <span className="text-xs text-slate-400">mín. {p.stock_minimo}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </main>

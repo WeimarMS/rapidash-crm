@@ -421,7 +421,7 @@ export default function Usuarios() {
               {loading ? '…' : `${users.length} usuario${users.length !== 1 ? 's' : ''} del sistema`}
             </p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
@@ -504,6 +504,79 @@ export default function Usuarios() {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Vista cards en móvil */}
+          <div className="md:hidden">
+            {loading ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
+              </div>
+            ) : users.length === 0 ? (
+              <div className="px-5 py-12 text-center text-slate-400 text-sm">
+                Sin usuarios del sistema. Crea el primero con "+ Nuevo usuario".
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {users.map(u => {
+                  const cfg = ROL_CFG[u.rol]
+                  const isSelf = u.id === authUser?.id
+                  const fmtDate = (iso: string) =>
+                    iso ? new Date(iso).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
+                  return (
+                    <div key={u.id} className="px-4 py-3.5 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-sm font-semibold text-slate-700 truncate">{displayName(u)}</span>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold flex-shrink-0 ${cfg.bg} ${cfg.text}`}>
+                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
+                          {cfg.label}
+                        </span>
+                      </div>
+                      <p className="font-semibold text-slate-800 text-sm">{u.nombre} {u.apellido}</p>
+                      <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
+                        <span>{u.zona_id ? zonaNombre(u.zona_id) : '—'}</span>
+                        <span>Registrado: {fmtDate(u.created)}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        {u.invited
+                          ? <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />Invitado
+                            </span>
+                          : u.activo
+                            ? <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Activo
+                              </span>
+                            : <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />Inactivo
+                              </span>
+                        }
+                        {isSelf ? (
+                          <span className="text-xs text-slate-300 italic">Tu cuenta</span>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setEditRol(u)}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                            >
+                              Cambiar rol
+                            </button>
+                            <button
+                              onClick={() => handleToggle(u)}
+                              disabled={toggling === u.id}
+                              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+                                u.activo ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'
+                              }`}
+                            >
+                              {toggling === u.id ? '…' : u.activo ? 'Desactivar' : 'Activar'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </main>
