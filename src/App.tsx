@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { canAccess, defaultRouteForRole } from './lib/permissions'
 import Layout       from './components/Layout'
 import Login        from './pages/Login'
 import Dashboard    from './pages/Dashboard'
@@ -41,6 +42,38 @@ function ProtectedLayout() {
   return <Layout />
 }
 
+// Verifica que el rol del usuario tenga permiso sobre la ruta actual.
+// Si no, lo redirige a la pantalla por defecto de su rol (sin sacarlo de sesión).
+function RoleGuard() {
+  const { profile, loading } = useAuth()
+  const { pathname } = useLocation()
+  if (loading) return <LoadingScreen />
+  // Sesión válida pero sin perfil: no redirigir a /login (causaría un bucle con
+  // RedirectIfAuthed). Mostramos una salida explícita.
+  if (!profile) return <NoProfileScreen />
+  if (!canAccess(profile.rol, pathname)) return <Navigate to={defaultRouteForRole(profile.rol)} replace />
+  return <Outlet />
+}
+
+function NoProfileScreen() {
+  const { signOut } = useAuth()
+  return (
+    <div className="min-h-screen flex items-center justify-center px-6" style={{ background: '#0f172a' }}>
+      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-sm w-full p-6 text-center">
+        <h1 className="text-lg font-extrabold text-slate-900 mb-1">Perfil no encontrado</h1>
+        <p className="text-sm text-slate-500 mb-5">
+          Tu cuenta no tiene un perfil asignado. Contactá a un administrador o volvé a iniciar sesión.
+        </p>
+        <button onClick={() => signOut()}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+          style={{ background: '#1e40af' }}>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function RedirectIfAuthed() {
   const { user, loading } = useAuth()
   if (loading) return <LoadingScreen />
@@ -61,18 +94,20 @@ export default function App() {
             <Route path="/login" element={<Login />} />
           </Route>
 
-          {/* Protected: require session */}
+          {/* Protected: require session, then enforce role per route */}
           <Route element={<ProtectedLayout />}>
-            <Route index              element={<Dashboard />}    />
-            <Route path="/pedidos"      element={<Pedidos />}      />
-            <Route path="/clientes"     element={<Clientes />}     />
-            <Route path="/productos"    element={<Productos />}    />
-            <Route path="/repartidores" element={<Repartidores />} />
-            <Route path="/rutas"        element={<Rutas />}        />
-            <Route path="/zonas"        element={<Zonas />}        />
-            <Route path="/incidencias"  element={<Incidencias />}  />
-            <Route path="/analytics"    element={<Analytics />}    />
-            <Route path="/usuarios"     element={<Usuarios />}     />
+            <Route element={<RoleGuard />}>
+              <Route index              element={<Dashboard />}    />
+              <Route path="/pedidos"      element={<Pedidos />}      />
+              <Route path="/clientes"     element={<Clientes />}     />
+              <Route path="/productos"    element={<Productos />}    />
+              <Route path="/repartidores" element={<Repartidores />} />
+              <Route path="/rutas"        element={<Rutas />}        />
+              <Route path="/zonas"        element={<Zonas />}        />
+              <Route path="/incidencias"  element={<Incidencias />}  />
+              <Route path="/analytics"    element={<Analytics />}    />
+              <Route path="/usuarios"     element={<Usuarios />}     />
+            </Route>
           </Route>
 
         </Routes>

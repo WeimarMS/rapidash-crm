@@ -2,73 +2,74 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import type { Rol } from '../lib/auth'
+import { canAccess } from '../lib/permissions'
 
-// ─── Nav items (role visibility) ─────────────────────────────────────────────
+// ─── Nav items ────────────────────────────────────────────────────────────────
+// La visibilidad por rol no se define acá: se deriva de canAccess (permissions.ts),
+// la misma fuente de verdad que usa el guard de rutas en App.tsx.
 
-const ALL_ROLES: Rol[] = ['admin', 'supervisor_zona', 'repartidor', 'cliente']
-
-const NAV_ITEMS: { label: string; path: string; roles: Rol[]; icon: React.ReactNode }[] = [
+const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode }[] = [
   {
-    label: 'Dashboard', path: '/', roles: ['admin', 'supervisor_zona'],
+    label: 'Dashboard', path: '/',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
       <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
     </svg>,
   },
   {
-    label: 'Pedidos', path: '/pedidos', roles: ALL_ROLES,
+    label: 'Pedidos', path: '/pedidos',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
       <rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>
     </svg>,
   },
   {
-    label: 'Clientes', path: '/clientes', roles: ['admin', 'supervisor_zona'],
+    label: 'Clientes', path: '/clientes',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
     </svg>,
   },
   {
-    label: 'Productos', path: '/productos', roles: ['admin', 'supervisor_zona'],
+    label: 'Productos', path: '/productos',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
     </svg>,
   },
   {
-    label: 'Repartidores', path: '/repartidores', roles: ['admin', 'supervisor_zona'],
+    label: 'Repartidores', path: '/repartidores',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
     </svg>,
   },
   {
-    label: 'Rutas', path: '/rutas', roles: ['admin', 'supervisor_zona', 'repartidor'],
+    label: 'Rutas', path: '/rutas',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M3 12h18M3 6l9-3 9 3M3 18l9 3 9-3"/>
     </svg>,
   },
   {
-    label: 'Zonas', path: '/zonas', roles: ['admin'],
+    label: 'Zonas', path: '/zonas',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/>
     </svg>,
   },
   {
-    label: 'Incidencias', path: '/incidencias', roles: ['admin', 'supervisor_zona'],
+    label: 'Incidencias', path: '/incidencias',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
       <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
     </svg>,
   },
   {
-    label: 'Analytics', path: '/analytics', roles: ['admin', 'supervisor_zona'],
+    label: 'Analytics', path: '/analytics',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
       <line x1="6" y1="20" x2="6" y2="14"/>
     </svg>,
   },
   {
-    label: 'Usuarios', path: '/usuarios', roles: ['admin'],
+    label: 'Usuarios', path: '/usuarios',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
@@ -91,7 +92,7 @@ const ROL_CFG: Record<Rol, { label: string; bg: string; text: string }> = {
 export default function Sidebar() {
   const { profile } = useAuth()
   const rol         = profile?.rol ?? 'cliente'
-  const visibleItems = NAV_ITEMS.filter(item => item.roles.includes(rol))
+  const visibleItems = NAV_ITEMS.filter(item => canAccess(rol, item.path))
 
   return (
     <aside
