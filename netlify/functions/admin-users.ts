@@ -63,9 +63,15 @@ async function requireAdmin(req: Request): Promise<{ ok: true } | { ok: false; r
   if (error || !user) return { ok: false, res: json({ error: 'Token inválido o expirado' }, 401) }
 
   const { data: profile, error: pErr } = await admin
-    .from('profiles').select('rol').eq('id', user.id).single()
-  if (pErr || (profile as { rol?: Rol } | null)?.rol !== 'admin') {
-    return { ok: false, res: json({ error: 'Acceso denegado: se requiere rol admin' }, 403) }
+    .from('profiles').select('rol').eq('id', user.id).maybeSingle()
+  if (pErr) {
+    return { ok: false, res: json({ error: `Error al leer el perfil: ${pErr.message}` }, 500) }
+  }
+  if (!profile) {
+    return { ok: false, res: json({ error: `Tu usuario (${user.id}) no tiene fila en profiles` }, 403) }
+  }
+  if ((profile as { rol?: Rol }).rol !== 'admin') {
+    return { ok: false, res: json({ error: `Acceso denegado: tu rol es "${(profile as { rol?: Rol }).rol}", se requiere admin` }, 403) }
   }
   return { ok: true }
 }
