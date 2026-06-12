@@ -13,11 +13,9 @@ import {
   computeRepartidorPerf,
   getMonthRange,
   type AnalyticsRaw,
-  type MesData,
   type TopItem,
   type ZonaComp,
   type EstadoData,
-  type RepartidorPerf,
 } from '../lib/analytics'
 import { fetchClientesMapData, type ClienteMapData } from '../lib/mapa'
 
@@ -711,7 +709,7 @@ export default function Analytics() {
                       <LabelList
                         dataKey="tasa"
                         position="right"
-                        formatter={(v: number) => `${v}%`}
+                        formatter={(v: unknown) => `${v as number}%`}
                         style={{ fontSize: 10, fontFamily: FONT, fill: '#64748b', fontWeight: 700 }}
                       />
                     </Bar>
@@ -755,7 +753,7 @@ export default function Analytics() {
                       <LabelList
                         dataKey="valor"
                         position="right"
-                        formatter={(v: number) => `${(v/1000).toFixed(1)}k`}
+                        formatter={(v: unknown) => `${((v as number)/1000).toFixed(1)}k`}
                         style={{ fontSize: 10, fontFamily: FONT, fill: '#64748b', fontWeight: 700 }}
                       />
                     </Bar>
