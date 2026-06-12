@@ -1,48 +1,123 @@
-import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
+import { useEffect, useMemo, useState, lazy, Suspense, useCallback } from 'react'
 import {
-  ResponsiveContainer, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, Cell, Legend,
+  ResponsiveContainer, ComposedChart, Line, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  PieChart, Pie, Cell, LabelList,
 } from 'recharts'
 import {
   fetchAnalyticsRaw,
   computePorMes,
-  computeTopProductos,
-  computeTopClientes,
+  computeTopProductosByIngresos,
   computePorZona,
+  computePorEstado,
+  computeRepartidorPerf,
+  getMonthRange,
   type AnalyticsRaw,
   type MesData,
   type TopItem,
   type ZonaComp,
+  type EstadoData,
+  type RepartidorPerf,
 } from '../lib/analytics'
 import { fetchClientesMapData, type ClienteMapData } from '../lib/mapa'
 
 const ClientesMapa = lazy(() => import('../components/ClientesMapa'))
 
-const FONT   = "'Plus Jakarta Sans', system-ui, sans-serif"
-const fmtBs  = (n: number) => `Bs. ${new Intl.NumberFormat('es-BO', { minimumFractionDigits: 0 }).format(n)}`
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const FONT = "'Plus Jakarta Sans', system-ui, sans-serif"
+const fmtBs  = (n: number) => `Bs. ${new Intl.NumberFormat('es-BO', { minimumFractionDigits: 0 }).format(Math.round(n))}`
 const fmtNum = (n: number) => n.toLocaleString('es-BO')
+const fmtPct = (n: number) => `${n}%`
 
-// ─── Colors ───────────────────────────────────────────────────────────────────
+const ESTADOS_FILTRO = ['pendiente','confirmado','en_ruta','entregado','fallido','cancelado']
+const CATEGORIAS     = ['analgesico','antibiotico','vitamina','insumo','vacuna']
+const CAT_LABELS: Record<string,string> = {
+  analgesico:'Analgésico', antibiotico:'Antibiótico',
+  vitamina:'Vitamina', insumo:'Insumo', vacuna:'Vacuna',
+}
+const ESTADO_LABELS: Record<string,string> = {
+  pendiente:'Pendiente', confirmado:'Confirmado', en_ruta:'En ruta',
+  entregado:'Entregado', fallido:'Fallido', cancelado:'Cancelado',
+}
 
-const AZUL_SCALE  = ['#1e40af','#2563eb','#3b82f6','#60a5fa','#93c5fd']
-const VERDE_SCALE = ['#15803d','#16a34a','#22c55e','#4ade80','#86efac']
+const PROD_COLORS = ['#6366f1','#8b5cf6','#a78bfa','#c4b5fd','#818cf8','#4f46e5','#7c3aed','#9333ea']
+const ZONA_COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6']
+
+// ─── SVG Icons ────────────────────────────────────────────────────────────────
+
+const IconTrendUp = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" />
+  </svg>
+)
+const IconPackage = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+  </svg>
+)
+const IconCheck = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+const IconReceipt = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+  </svg>
+)
+const IconAlert = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+)
+const IconStar = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>
+)
+const IconFilter = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+  </svg>
+)
+const IconX = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-3 h-3">
+    <path d="M18 6L6 18M6 6l12 12"/>
+  </svg>
+)
+
+// ─── Axis / Grid shared ───────────────────────────────────────────────────────
+
+const axisStyle  = { fontSize: 11, fontFamily: FONT, fill: '#94a3b8' }
+const gridProps  = { strokeDasharray: '3 3', stroke: '#f1f5f9', vertical: false } as const
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-function Skeleton({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
-  return <div className={`bg-slate-200 rounded-xl animate-pulse ${className}`} style={style} />
+function Skel({ h = 220 }: { h?: number }) {
+  return <div className="bg-slate-100 rounded-xl animate-pulse" style={{ height: h }} />
 }
 
-// ─── Tooltip ─────────────────────────────────────────────────────────────────
+// ─── Custom Tooltip ───────────────────────────────────────────────────────────
 
-const CustomTooltip = ({ active, payload, label, prefix = '' }: any) => {
+const Tip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg space-y-1">
-      {label && <p className="font-bold text-slate-300 mb-1">{label}</p>}
-      {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.color ?? '#fff' }}>
-          {p.name}: <span className="font-bold">{prefix}{typeof p.value === 'number' ? fmtNum(p.value) : p.value}</span>
+    <div className="bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl shadow-2xl space-y-1.5 border border-slate-700">
+      {label && <p className="font-bold text-slate-300 mb-1 text-[11px] uppercase tracking-wide">{label}</p>}
+      {payload.map((p: any, i: number) => (
+        <p key={i} className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.color ?? p.fill ?? '#fff' }} />
+          <span className="text-slate-300">{p.name}:</span>
+          <span className="font-bold text-white">
+            {p.name?.includes('Ingreso') || p.name?.includes('Bs')
+              ? fmtBs(p.value)
+              : p.name?.includes('Tasa') || p.name?.includes('%')
+              ? fmtPct(p.value)
+              : fmtNum(p.value)}
+          </span>
         </p>
       ))}
     </div>
@@ -51,76 +126,224 @@ const CustomTooltip = ({ active, payload, label, prefix = '' }: any) => {
 
 // ─── ChartCard ────────────────────────────────────────────────────────────────
 
-function ChartCard({ title, subtitle, children, loading, height = 220 }: {
-  title: string; subtitle?: string; children: React.ReactNode; loading: boolean; height?: number
+function ChartCard({ title, subtitle, children, loading, height = 240, className = '' }: {
+  title: string; subtitle?: string; children: React.ReactNode
+  loading: boolean; height?: number; className?: string
 }) {
   return (
-    <div className="anim-card bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+    <div className={`bg-white rounded-2xl border border-slate-100 shadow-sm p-6 ${className}`}>
       <div className="mb-5">
         <h2 className="text-sm font-bold text-slate-800 tracking-tight">{title}</h2>
         {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
       </div>
-      {loading
-        ? <Skeleton style={{ height }} />
-        : children}
+      {loading ? <Skel h={height} /> : children}
     </div>
   )
 }
 
-// ─── StatCard ─────────────────────────────────────────────────────────────────
+// ─── EmptyState ───────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, color, small }: { label: string; value: string | number; color: string; small?: boolean }) {
+function EmptyState({ onClear }: { onClear?: () => void }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-3 flex flex-col gap-1">
-      <p className="text-xs font-semibold text-slate-400 truncate">{label}</p>
-      <p className={`font-extrabold truncate ${small ? 'text-lg' : 'text-2xl'}`} style={{ color }}>{value}</p>
+    <div className="flex flex-col items-center justify-center py-12 gap-2">
+      <p className="text-sm text-slate-400">Sin datos para el filtro activo</p>
+      {onClear && (
+        <button onClick={onClear} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline">
+          Limpiar filtros
+        </button>
+      )}
     </div>
   )
 }
 
-// ─── FilterChip ───────────────────────────────────────────────────────────────
+// ─── FilterSelect ─────────────────────────────────────────────────────────────
 
-function FilterChip({ label, color, onRemove }: { label: string; color: string; onRemove: () => void }) {
+function FilterSelect({ label, value, options, onChange }: {
+  label: string
+  value: string
+  options: { value: string; label: string }[]
+  onChange: (v: string) => void
+}) {
   return (
-    <span
-      className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-semibold text-white"
-      style={{ background: color }}
-    >
-      {label}
-      <button
-        onClick={onRemove}
-        className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-white/25 transition-colors flex-shrink-0"
+    <div className="relative">
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className={`
+          appearance-none pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer
+          focus:outline-none focus:ring-2 focus:ring-indigo-300
+          ${value
+            ? 'bg-indigo-600 text-white border-indigo-600'
+            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}
+        `}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-3 h-3">
-          <path d="M18 6L6 18M6 6l12 12" />
+        <option value="">{label}</option>
+        {options.map(o => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+      <span className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 ${value ? 'text-white/70' : 'text-slate-400'}`}>
+        <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+          <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06z"/>
         </svg>
+      </span>
+    </div>
+  )
+}
+
+// ─── ActiveChip ───────────────────────────────────────────────────────────────
+
+function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
+      {label}
+      <button onClick={onRemove} className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-indigo-200 transition-colors">
+        <IconX />
       </button>
     </span>
   )
 }
 
-// ─── Axis shared styles ───────────────────────────────────────────────────────
+// ─── KPI Card ─────────────────────────────────────────────────────────────────
 
-const axisStyle = { fontSize: 11, fontFamily: FONT, fill: '#94a3b8' }
-const gridProps = { strokeDasharray: '3 3', stroke: '#f1f5f9', vertical: false } as const
+function KpiCard({ label, value, subvalue, icon, accent, delta, deltaLabel, loading }: {
+  label: string; value: string; subvalue?: string
+  icon: React.ReactNode; accent: string
+  delta?: number; deltaLabel?: string; loading?: boolean
+}) {
+  const positive = (delta ?? 0) >= 0
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
+        <span className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${accent}18`, color: accent }}>
+          {icon}
+        </span>
+      </div>
+      {loading ? (
+        <Skel h={40} />
+      ) : (
+        <>
+          <div>
+            <p className="text-2xl font-extrabold text-slate-900 leading-tight">{value}</p>
+            {subvalue && <p className="text-xs text-slate-400 mt-0.5">{subvalue}</p>}
+          </div>
+          {delta !== undefined && (
+            <div className={`flex items-center gap-1.5 text-xs font-semibold ${positive ? 'text-emerald-600' : 'text-rose-500'}`}>
+              <span>{positive ? '↑' : '↓'} {Math.abs(delta)}%</span>
+              {deltaLabel && <span className="text-slate-400 font-normal">{deltaLabel}</span>}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Date Range Slider ────────────────────────────────────────────────────────
+
+function DateRangeSlider({ months, startIdx, endIdx, onChange }: {
+  months: string[]
+  startIdx: number
+  endIdx: number
+  onChange: (start: number, end: number) => void
+}) {
+  const n = months.length
+  if (n < 2) return null
+
+  const MESES_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+  const fmt = (key: string) => {
+    const [y, m] = key.split('-')
+    return `${MESES_ES[parseInt(m) - 1]} ${y}`
+  }
+
+  const pct = (i: number) => `${(i / (n - 1)) * 100}%`
+
+  return (
+    <div className="flex items-center gap-4 min-w-0">
+      <span className="text-xs font-semibold text-slate-500 whitespace-nowrap hidden sm:block">Período</span>
+      <div className="flex items-center gap-3 flex-1 min-w-[200px]">
+        <span className="text-xs font-bold text-indigo-600 whitespace-nowrap">{fmt(months[startIdx])}</span>
+        <div className="relative flex-1 h-5 flex items-center">
+          {/* Track */}
+          <div className="absolute inset-x-0 h-1.5 rounded-full bg-slate-200" />
+          {/* Active track */}
+          <div
+            className="absolute h-1.5 rounded-full bg-indigo-500"
+            style={{ left: pct(startIdx), right: `${100 - (endIdx / (n - 1)) * 100}%` }}
+          />
+          {/* Start handle */}
+          <input
+            type="range" min={0} max={n - 1} value={startIdx}
+            onChange={e => {
+              const v = parseInt(e.target.value)
+              if (v <= endIdx) onChange(v, endIdx)
+            }}
+            className="absolute inset-0 w-full opacity-0 cursor-pointer h-5"
+            style={{ zIndex: startIdx === endIdx ? 5 : undefined }}
+          />
+          {/* End handle */}
+          <input
+            type="range" min={0} max={n - 1} value={endIdx}
+            onChange={e => {
+              const v = parseInt(e.target.value)
+              if (v >= startIdx) onChange(startIdx, v)
+            }}
+            className="absolute inset-0 w-full opacity-0 cursor-pointer h-5"
+          />
+          {/* Thumb markers */}
+          <div className="absolute w-4 h-4 rounded-full bg-white border-2 border-indigo-500 shadow pointer-events-none -translate-x-1/2"
+            style={{ left: pct(startIdx) }} />
+          <div className="absolute w-4 h-4 rounded-full bg-white border-2 border-indigo-500 shadow pointer-events-none -translate-x-1/2"
+            style={{ left: pct(endIdx) }} />
+        </div>
+        <span className="text-xs font-bold text-indigo-600 whitespace-nowrap">{fmt(months[endIdx])}</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Custom label for line chart points ───────────────────────────────────────
+
+const LineLabel = ({ x, y, value, fill }: any) => {
+  if (value === undefined || value === null) return null
+  return (
+    <text x={x} y={y - 8} textAnchor="middle" fill={fill ?? '#6366f1'} fontSize={10} fontWeight={700} fontFamily={FONT}>
+      {typeof value === 'number' && value > 999 ? `${(value/1000).toFixed(1)}k` : value}
+    </text>
+  )
+}
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Analytics() {
-  const [raw, setRaw]       = useState<AnalyticsRaw | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError]   = useState<string | null>(null)
-
-  const [selectedMes,      setSelectedMes]      = useState<string | null>(null)
-  const [selectedProducto, setSelectedProducto] = useState<string | null>(null)
-  const [selectedCliente,  setSelectedCliente]  = useState<string | null>(null)
-
+  const [raw, setRaw]           = useState<AnalyticsRaw | null>(null)
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState<string | null>(null)
   const [mapaClientes, setMapaClientes] = useState<ClienteMapData[]>([])
-  const [mapaLoading,  setMapaLoading]  = useState(true)
+  const [mapaLoading, setMapaLoading]   = useState(true)
+
+  // ── Dropdown filters ───────────────────────────────────────────────────────
+  const [fZona,        setFZona]        = useState('')
+  const [fCategoria,   setFCategoria]   = useState('')
+  const [fRepartidor,  setFRepartidor]  = useState('')
+  const [fEstado,      setFEstado]      = useState('')
+
+  // ── Date range slider ──────────────────────────────────────────────────────
+  const [dateStart, setDateStart] = useState(0)
+  const [dateEnd,   setDateEnd]   = useState(0)
 
   useEffect(() => {
     fetchAnalyticsRaw()
-      .then(d => { setRaw(d); setLoading(false) })
+      .then(d => {
+        setRaw(d)
+        const months = getMonthRange(d.pedidos)
+        if (months.length > 0) {
+          setDateStart(0)
+          setDateEnd(months.length - 1)
+        }
+        setLoading(false)
+      })
       .catch(e => { setError(e.message); setLoading(false) })
 
     fetchClientesMapData()
@@ -128,392 +351,478 @@ export default function Analytics() {
       .catch(() => setMapaLoading(false))
   }, [])
 
-  const hasFilter = selectedMes !== null || selectedProducto !== null || selectedCliente !== null
-  const clearFilters = () => { setSelectedMes(null); setSelectedProducto(null); setSelectedCliente(null) }
+  const monthKeys = useMemo(() => raw ? getMonthRange(raw.pedidos) : [], [raw])
 
-  const toggleMes      = (m: string) => setSelectedMes(prev => prev === m ? null : m)
-  const toggleProducto = (n: string) => setSelectedProducto(prev => prev === n ? null : n)
-  const toggleCliente  = (n: string) => setSelectedCliente(prev => prev === n ? null : n)
+  const clearFilters = useCallback(() => {
+    setFZona(''); setFCategoria(''); setFRepartidor(''); setFEstado('')
+    if (monthKeys.length > 0) { setDateStart(0); setDateEnd(monthKeys.length - 1) }
+  }, [monthKeys])
 
-  // ── Cross-filter derivations ────────────────────────────────────────────────
+  const hasFilter = fZona !== '' || fCategoria !== '' || fRepartidor !== '' || fEstado !== ''
+    || (monthKeys.length > 1 && (dateStart > 0 || dateEnd < monthKeys.length - 1))
 
-  // Pedido IDs that contain the selected product (for filtering other views)
-  const productoPedidoIds = useMemo(() => {
-    if (!raw || !selectedProducto) return null
+  // ── Zona lookup ─────────────────────────────────────────────────────────────
+  const zonaLookup = useMemo(() =>
+    Object.fromEntries((raw?.zonas ?? []).map(z => [z.id, z.nombre])),
+    [raw])
+
+  // ── Items filtered by category ─────────────────────────────────────────────
+  const itemsByCategory = useMemo(() => {
+    if (!raw || !fCategoria) return null
     return new Set(
-      raw.items.filter(i => i.producto_nombre === selectedProducto).map(i => i.pedido_id)
+      raw.items
+        .filter(i => i.producto_categoria === fCategoria)
+        .map(i => i.pedido_id)
     )
-  }, [raw, selectedProducto])
+  }, [raw, fCategoria])
 
-  // "Por mes" charts: filtered by cliente + producto only (NOT mes → all months visible, selected highlighted)
-  const porMesPedidos = useMemo(() => {
+  // ── Active month keys in range ─────────────────────────────────────────────
+  const activeMonthKeys = useMemo(() => {
+    if (!monthKeys.length) return new Set<string>()
+    return new Set(monthKeys.slice(dateStart, dateEnd + 1))
+  }, [monthKeys, dateStart, dateEnd])
+
+  // ── Main filtered pedidos ──────────────────────────────────────────────────
+  const filtered = useMemo(() => {
     if (!raw) return []
     return raw.pedidos.filter(p =>
-      (!selectedCliente   || p.cliente_nombre === selectedCliente) &&
-      (!productoPedidoIds || productoPedidoIds.has(p.id))
+      (!fZona          || p.zona_id === fZona) &&
+      (!fRepartidor    || p.repartidor_id === fRepartidor) &&
+      (!fEstado        || p.estado === fEstado) &&
+      (!itemsByCategory || itemsByCategory.has(p.id)) &&
+      (activeMonthKeys.size === 0 || activeMonthKeys.has(p.mes_key))
     )
-  }, [raw, selectedCliente, productoPedidoIds])
+  }, [raw, fZona, fRepartidor, fEstado, itemsByCategory, activeMonthKeys])
 
-  // IDs for "Top productos" chart: filtered by mes + cliente (NOT producto → all products visible, selected highlighted)
-  const topProdPedidoIds = useMemo(() => {
-    if (!raw || (!selectedMes && !selectedCliente)) return null
-    return new Set(
-      raw.pedidos
-        .filter(p =>
-          (!selectedMes     || p.mes_label === selectedMes) &&
-          (!selectedCliente || p.cliente_nombre === selectedCliente)
-        )
-        .map(p => p.id)
-    )
-  }, [raw, selectedMes, selectedCliente])
-
-  // "Top clientes": filtered by mes + producto (NOT cliente → all clients visible, selected highlighted)
-  const topClientePedidos = useMemo(() => {
+  // ── Items for filtered pedidos ─────────────────────────────────────────────
+  const filteredPedidoIds = useMemo(() => new Set(filtered.map(p => p.id)), [filtered])
+  const filteredItems = useMemo(() => {
     if (!raw) return []
-    return raw.pedidos.filter(p =>
-      (!selectedMes      || p.mes_label === selectedMes) &&
-      (!productoPedidoIds || productoPedidoIds.has(p.id))
-    )
-  }, [raw, selectedMes, productoPedidoIds])
+    return raw.items.filter(i => filteredPedidoIds.has(i.pedido_id))
+  }, [raw, filteredPedidoIds])
 
-  // All filters active: for KPIs + zona
-  const allFiltered = useMemo(() => {
-    if (!raw) return []
-    return raw.pedidos.filter(p =>
-      (!selectedMes      || p.mes_label === selectedMes) &&
-      (!selectedCliente  || p.cliente_nombre === selectedCliente) &&
-      (!productoPedidoIds || productoPedidoIds.has(p.id))
-    )
-  }, [raw, selectedMes, selectedCliente, productoPedidoIds])
+  // ── Chart data ─────────────────────────────────────────────────────────────
+  const porMesData        = useMemo(() => computePorMes(filtered),                              [filtered])
+  const porZonaData       = useMemo(() => computePorZona(filtered, raw?.zonas ?? []),           [filtered, raw])
+  const porEstadoData     = useMemo(() => computePorEstado(filtered),                           [filtered])
+  const topProdData       = useMemo(() => computeTopProductosByIngresos(filteredItems, null),   [filteredItems])
+  const repartidorData    = useMemo(() => computeRepartidorPerf(filtered),                      [filtered])
 
-  // ── Derived chart data ──────────────────────────────────────────────────────
+  // ── KPI calculations ───────────────────────────────────────────────────────
+  const kpiIngresos     = useMemo(() => filtered.filter(p => p.estado === 'entregado').reduce((s, p) => s + p.total, 0), [filtered])
+  const kpiPedidos      = filtered.length
+  const kpiEntregados   = useMemo(() => filtered.filter(p => p.estado === 'entregado').length, [filtered])
+  const kpiTasaEntrega  = kpiPedidos > 0 ? Math.round((kpiEntregados / kpiPedidos) * 100) : 0
+  const kpiTicketProm   = kpiEntregados > 0 ? kpiIngresos / kpiEntregados : 0
+  const kpiFallidos     = useMemo(() => filtered.filter(p => p.estado === 'fallido').length, [filtered])
+  const kpiEstrella     = useMemo(() => {
+    if (!repartidorData.length) return '—'
+    return repartidorData[0].nombre.split(' ')[0]
+  }, [repartidorData])
 
-  const porMesData    = useMemo(() => computePorMes(porMesPedidos),                              [porMesPedidos])
-  const topProdData   = useMemo(() => computeTopProductos(raw?.items ?? [], topProdPedidoIds),   [raw, topProdPedidoIds])
-  const topCliData    = useMemo(() => computeTopClientes(topClientePedidos),                     [topClientePedidos])
-  const porZonaData   = useMemo(() => computePorZona(allFiltered, raw?.zonas ?? []),             [allFiltered, raw])
+  // Delta vs prev half: compare last half of months vs first half
+  const kpiDelta = useMemo(() => {
+    if (porMesData.length < 2) return null
+    const mid   = Math.floor(porMesData.length / 2)
+    const prev  = porMesData.slice(0, mid).reduce((s, m) => s + m.ingresos, 0)
+    const curr  = porMesData.slice(mid).reduce((s, m) => s + m.ingresos, 0)
+    if (prev === 0) return null
+    return Math.round(((curr - prev) / prev) * 100)
+  }, [porMesData])
 
-  // ── Summary KPIs from fully-filtered data ──────────────────────────────────
+  // ── Filter options from data ───────────────────────────────────────────────
+  const zonaOptions = useMemo(() =>
+    (raw?.zonas ?? []).map(z => ({ value: z.id, label: z.nombre })),
+    [raw])
 
-  const summaryTotalPedidos  = allFiltered.length
-  const summaryIngresos      = useMemo(() =>
-    allFiltered.filter(p => p.estado === 'entregado').reduce((s, p) => s + p.total, 0),
-    [allFiltered])
-  const summaryMejorMes      = porMesData.length
-    ? porMesData.reduce((best, m) => m.pedidos > best.pedidos ? m : best, porMesData[0]).mes
-    : '—'
-  const summaryZonas         = porZonaData.length
-
-  const hoy = new Date().toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const repOptions = useMemo(() =>
+    (raw?.repartidores ?? []).map(r => ({ value: r.id, label: r.nombre.split(' ')[0] + ' ' + r.nombre.split(' ')[1] })),
+    [raw])
 
   return (
     <>
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Analytics</h1>
-            <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
-          </div>
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600">
-            {hasFilter ? 'Filtro activo' : 'Datos históricos · 6 meses'}
-          </span>
-        </div>
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-slate-100 px-6 py-3">
+        <div className="flex flex-col gap-3 max-w-7xl mx-auto">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h1 className="text-lg font-extrabold tracking-tight text-slate-900">Analytics</h1>
+              <p className="text-xs text-slate-400 mt-0.5">Centro de inteligencia de negocio</p>
+            </div>
 
-        {/* Active filter chips */}
-        {hasFilter && (
-          <div className="flex items-center gap-2 mt-3 flex-wrap">
-            <span className="text-xs font-semibold text-slate-400">Filtros activos:</span>
-            {selectedMes && (
-              <FilterChip label={`Mes: ${selectedMes}`} color="#1e40af" onRemove={() => setSelectedMes(null)} />
+            {/* Date range slider */}
+            {!loading && monthKeys.length > 1 && (
+              <div className="flex-1 max-w-lg">
+                <DateRangeSlider
+                  months={monthKeys}
+                  startIdx={dateStart}
+                  endIdx={dateEnd}
+                  onChange={(s, e) => { setDateStart(s); setDateEnd(e) }}
+                />
+              </div>
             )}
-            {selectedProducto && (
-              <FilterChip label={`Producto: ${selectedProducto}`} color="#7c3aed" onRemove={() => setSelectedProducto(null)} />
-            )}
-            {selectedCliente && (
-              <FilterChip label={`Cliente: ${selectedCliente}`} color="#15803d" onRemove={() => setSelectedCliente(null)} />
-            )}
-            <button
-              onClick={clearFilters}
-              className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors underline underline-offset-2 ml-1"
-            >
-              Limpiar filtros
-            </button>
+
+            <span className={`text-xs font-semibold px-3 py-1.5 rounded-full flex-shrink-0 ${
+              hasFilter ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
+            }`}>
+              {hasFilter ? 'Filtro activo' : `${kpiPedidos} pedidos`}
+            </span>
           </div>
-        )}
+
+          {/* Filter bar */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-slate-400 flex-shrink-0"><IconFilter /></span>
+            <FilterSelect
+              label="Zona" value={fZona}
+              options={zonaOptions}
+              onChange={setFZona}
+            />
+            <FilterSelect
+              label="Categoría" value={fCategoria}
+              options={CATEGORIAS.map(c => ({ value: c, label: CAT_LABELS[c] }))}
+              onChange={setFCategoria}
+            />
+            <FilterSelect
+              label="Repartidor" value={fRepartidor}
+              options={repOptions}
+              onChange={setFRepartidor}
+            />
+            <FilterSelect
+              label="Estado" value={fEstado}
+              options={ESTADOS_FILTRO.map(e => ({ value: e, label: ESTADO_LABELS[e] }))}
+              onChange={setFEstado}
+            />
+
+            {/* Active chips */}
+            {fZona && (
+              <ActiveChip label={`Zona: ${zonaLookup[fZona] ?? fZona}`} onRemove={() => setFZona('')} />
+            )}
+            {fCategoria && (
+              <ActiveChip label={`Cat: ${CAT_LABELS[fCategoria]}`} onRemove={() => setFCategoria('')} />
+            )}
+            {fRepartidor && (
+              <ActiveChip label={repOptions.find(r => r.value === fRepartidor)?.label ?? fRepartidor} onRemove={() => setFRepartidor('')} />
+            )}
+            {fEstado && (
+              <ActiveChip label={ESTADO_LABELS[fEstado]} onRemove={() => setFEstado('')} />
+            )}
+            {hasFilter && (
+              <button
+                onClick={clearFilters}
+                className="text-xs font-semibold text-slate-400 hover:text-slate-700 transition-colors ml-1 underline underline-offset-2"
+              >
+                Limpiar todo
+              </button>
+            )}
+          </div>
+        </div>
       </header>
 
-      <main className="flex-1 px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
+      <main className="flex-1 px-6 py-6 max-w-7xl w-full mx-auto space-y-5">
         {error && (
           <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm">{error}</div>
         )}
 
-        {/* ── Summary row ── */}
-        {loading ? (
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16" />)}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-            <StatCard label="Total pedidos"    value={fmtNum(summaryTotalPedidos)} color="#1e40af" />
-            <StatCard label="Ingresos totales" value={fmtBs(summaryIngresos)}      color="#15803d" small />
-            <StatCard label="Mejor mes"        value={summaryMejorMes}             color="#0891b2" />
-            <StatCard label="Zonas activas"    value={summaryZonas}                color="#7c3aed" />
-          </div>
-        )}
-
-        {/* ── Row 1: pedidos por mes + ingresos por mes ── */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-
-          {/* Pedidos por mes (BarChart — clickable) */}
-          <ChartCard
-            title="Pedidos por mes"
-            subtitle={
-              selectedProducto || selectedCliente
-                ? `Filtrado · Clic para ${selectedMes ? 'cambiar' : 'seleccionar'} mes`
-                : `Clic para filtrar · ${selectedMes ? `Mes: ${selectedMes}` : 'Todos los meses'}`
-            }
+        {/* ── KPIs ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <KpiCard
+            label="Ingresos" value={fmtBs(kpiIngresos)}
+            subvalue="Pedidos entregados"
+            icon={<IconTrendUp />} accent="#6366f1"
+            delta={kpiDelta ?? undefined}
+            deltaLabel="vs período ant."
             loading={loading}
+          />
+          <KpiCard
+            label="Pedidos" value={fmtNum(kpiPedidos)}
+            subvalue="Total en período"
+            icon={<IconPackage />} accent="#3b82f6"
+            loading={loading}
+          />
+          <KpiCard
+            label="Tasa entrega" value={fmtPct(kpiTasaEntrega)}
+            subvalue={`${fmtNum(kpiEntregados)} entregados`}
+            icon={<IconCheck />} accent="#22c55e"
+            loading={loading}
+          />
+          <KpiCard
+            label="Ticket promedio" value={fmtBs(kpiTicketProm)}
+            subvalue="Por pedido entregado"
+            icon={<IconReceipt />} accent="#f59e0b"
+            loading={loading}
+          />
+          <KpiCard
+            label="Pedidos fallidos" value={fmtNum(kpiFallidos)}
+            subvalue={kpiPedidos > 0 ? `${Math.round((kpiFallidos/kpiPedidos)*100)}% del total` : '—'}
+            icon={<IconAlert />} accent="#ef4444"
+            loading={loading}
+          />
+          <KpiCard
+            label="Mejor repartidor" value={kpiEstrella}
+            subvalue={repartidorData[0] ? `${repartidorData[0].entregados} entregas` : '—'}
+            icon={<IconStar />} accent="#f59e0b"
+            loading={loading}
+          />
+        </div>
+
+        {/* ── Row 1: Línea combinada + Donut estados ── */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+
+          {/* Gráfico combinado pedidos + ingresos */}
+          <ChartCard
+            title="Evolución mensual"
+            subtitle="Pedidos (eje izq.) · Ingresos Bs. (eje der.)"
+            loading={loading}
+            height={260}
+            className="xl:col-span-2"
           >
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={porMesData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
-                <CartesianGrid {...gridProps} />
-                <XAxis dataKey="mes" tick={axisStyle} axisLine={false} tickLine={false} />
-                <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-                <Bar
-                  dataKey="pedidos"
-                  name="Pedidos"
-                  radius={[6, 6, 0, 0]}
-                  isAnimationActive
-                  animationDuration={900}
-                  cursor="pointer"
-                  onClick={(d) => { const m = d.payload as MesData; if (m) toggleMes(m.mes) }}
-                >
-                  {porMesData.map(entry => {
-                    const isSelected = selectedMes === entry.mes
-                    const isDimmed   = selectedMes !== null && !isSelected
-                    return (
-                      <Cell
-                        key={entry.mes}
-                        fill="#1e40af"
-                        opacity={isDimmed ? 0.25 : 1}
-                        stroke={isSelected ? '#1e293b' : 'transparent'}
-                        strokeWidth={isSelected ? 2 : 0}
-                      />
-                    )
-                  })}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {porMesData.length === 0
+              ? <EmptyState onClear={clearFilters} />
+              : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <ComposedChart data={porMesData} margin={{ top: 24, right: 20, left: -10, bottom: 0 }}>
+                    <CartesianGrid {...gridProps} />
+                    <XAxis dataKey="mes" tick={axisStyle} axisLine={false} tickLine={false} />
+                    <YAxis
+                      yAxisId="pedidos"
+                      orientation="left"
+                      tick={axisStyle} axisLine={false} tickLine={false}
+                    />
+                    <YAxis
+                      yAxisId="ingresos"
+                      orientation="right"
+                      tick={axisStyle} axisLine={false} tickLine={false}
+                      tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
+                    />
+                    <Tooltip content={<Tip />} />
+                    <Legend wrapperStyle={{ fontFamily: FONT, fontSize: 11, paddingTop: 8 }} />
+                    <Line
+                      yAxisId="pedidos"
+                      type="monotone"
+                      dataKey="pedidos"
+                      name="Pedidos"
+                      stroke="#6366f1"
+                      strokeWidth={2.5}
+                      dot={{ r: 4, fill: '#6366f1', strokeWidth: 0 }}
+                      activeDot={{ r: 6 }}
+                      isAnimationActive
+                    >
+                      <LabelList dataKey="pedidos" content={<LineLabel fill="#6366f1" />} />
+                    </Line>
+                    <Line
+                      yAxisId="ingresos"
+                      type="monotone"
+                      dataKey="ingresos"
+                      name="Ingresos Bs."
+                      stroke="#22c55e"
+                      strokeWidth={2.5}
+                      strokeDasharray="5 3"
+                      dot={{ r: 4, fill: '#22c55e', strokeWidth: 0 }}
+                      activeDot={{ r: 6 }}
+                      isAnimationActive
+                    >
+                      <LabelList dataKey="ingresos" content={<LineLabel fill="#22c55e" />} />
+                    </Line>
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )
+            }
           </ChartCard>
 
-          {/* Ingresos por mes (BarChart — clickable, mismo selectedMes) */}
+          {/* Donut de estados */}
           <ChartCard
-            title="Ingresos por mes"
-            subtitle={
-              selectedProducto || selectedCliente
-                ? `Filtrado · Clic para ${selectedMes ? 'cambiar' : 'seleccionar'} mes`
-                : `Pedidos entregados (Bs.) · Clic para filtrar`
-            }
+            title="Por estado"
+            subtitle="Distribución de pedidos"
             loading={loading}
+            height={260}
           >
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={porMesData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
-                <CartesianGrid {...gridProps} />
-                <XAxis dataKey="mes" tick={axisStyle} axisLine={false} tickLine={false} />
-                <YAxis
-                  tick={axisStyle} axisLine={false} tickLine={false}
-                  tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
-                />
-                <Tooltip content={<CustomTooltip prefix="Bs. " />} cursor={{ fill: '#f8fafc' }} />
-                <Bar
-                  dataKey="ingresos"
-                  name="Ingresos"
-                  radius={[6, 6, 0, 0]}
-                  isAnimationActive
-                  animationDuration={900}
-                  cursor="pointer"
-                  onClick={(d) => { const m = d.payload as MesData; if (m) toggleMes(m.mes) }}
-                >
-                  {porMesData.map(entry => {
-                    const isSelected = selectedMes === entry.mes
-                    const isDimmed   = selectedMes !== null && !isSelected
-                    return (
-                      <Cell
-                        key={entry.mes}
-                        fill="#15803d"
-                        opacity={isDimmed ? 0.25 : 1}
-                        stroke={isSelected ? '#1e293b' : 'transparent'}
-                        strokeWidth={isSelected ? 2 : 0}
-                      />
-                    )
-                  })}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {porEstadoData.length === 0
+              ? <EmptyState onClear={clearFilters} />
+              : (
+                <div className="flex flex-col items-center gap-3">
+                  <ResponsiveContainer width="100%" height={180}>
+                    <PieChart>
+                      <Pie
+                        data={porEstadoData}
+                        dataKey="valor"
+                        nameKey="estado"
+                        cx="50%" cy="50%"
+                        innerRadius={52}
+                        outerRadius={80}
+                        paddingAngle={2}
+                        isAnimationActive
+                      >
+                        {porEstadoData.map((entry: EstadoData, i: number) => (
+                          <Cell key={i} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<Tip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-col gap-1.5 w-full px-2">
+                    {porEstadoData.map((e: EstadoData) => (
+                      <div key={e.estado} className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: e.color }} />
+                          <span className="text-slate-600 font-medium">{e.estado}</span>
+                        </span>
+                        <span className="font-bold text-slate-800">{fmtNum(e.valor)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
           </ChartCard>
         </div>
 
-        {/* ── Row 2: top productos + top clientes ── */}
+        {/* ── Row 2: Performance repartidores + Top productos ── */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
 
-          {/* Top 5 productos (clickable) */}
+          {/* Performance repartidores */}
           <ChartCard
-            title="Top 5 productos"
-            subtitle={
-              selectedMes || selectedCliente
-                ? `Filtrado · Clic para ${selectedProducto ? 'cambiar' : 'seleccionar'} producto`
-                : `Por unidades pedidas · Clic para filtrar`
-            }
+            title="Performance de repartidores"
+            subtitle="Entregas completadas y tasa de éxito"
             loading={loading}
-            height={200}
+            height={260}
+          >
+            {repartidorData.length === 0
+              ? <EmptyState onClear={clearFilters} />
+              : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <ComposedChart
+                    data={repartidorData}
+                    layout="vertical"
+                    margin={{ top: 0, right: 50, left: 0, bottom: 0 }}
+                    barCategoryGap="20%"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                    <XAxis type="number" tick={axisStyle} axisLine={false} tickLine={false} />
+                    <YAxis
+                      type="category" dataKey="nombre"
+                      tick={{ ...axisStyle, fontSize: 10 }}
+                      axisLine={false} tickLine={false} width={80}
+                      tickFormatter={n => n.split(' ')[0]}
+                    />
+                    <Tooltip content={<Tip />} />
+                    <Legend wrapperStyle={{ fontFamily: FONT, fontSize: 11 }} />
+                    <Bar dataKey="pedidos"    name="Total"      fill="#c7d2fe" radius={[0, 4, 4, 0]} isAnimationActive />
+                    <Bar dataKey="entregados" name="Entregados" fill="#6366f1" radius={[0, 4, 4, 0]} isAnimationActive>
+                      <LabelList
+                        dataKey="tasa"
+                        position="right"
+                        formatter={(v: number) => `${v}%`}
+                        style={{ fontSize: 10, fontFamily: FONT, fill: '#64748b', fontWeight: 700 }}
+                      />
+                    </Bar>
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )
+            }
+          </ChartCard>
+
+          {/* Top productos por ingresos */}
+          <ChartCard
+            title="Top productos"
+            subtitle="Por ingresos generados (Bs.)"
+            loading={loading}
+            height={260}
           >
             {topProdData.length === 0
-              ? <EmptyChart msg="Sin datos para el filtro actual" />
+              ? <EmptyState onClear={clearFilters} />
               : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart
+                <ResponsiveContainer width="100%" height={260}>
+                  <ComposedChart
                     data={topProdData}
                     layout="vertical"
-                    margin={{ top: 0, right: 40, left: 0, bottom: 0 }}
-                    barCategoryGap="25%"
+                    margin={{ top: 0, right: 60, left: 0, bottom: 0 }}
+                    barCategoryGap="18%"
                   >
-                    <XAxis type="number" tick={axisStyle} axisLine={false} tickLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                    <XAxis type="number" tick={axisStyle} axisLine={false} tickLine={false}
+                      tickFormatter={v => `${(v/1000).toFixed(0)}k`}
+                    />
                     <YAxis
                       type="category" dataKey="nombre"
-                      tick={{ ...axisStyle, fontSize: 10 }}
-                      axisLine={false} tickLine={false} width={120}
+                      tick={{ ...axisStyle, fontSize: 9 }}
+                      axisLine={false} tickLine={false} width={110}
                     />
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-                    <Bar
-                      dataKey="valor"
-                      name="Unidades"
-                      radius={[0, 6, 6, 0]}
-                      isAnimationActive
-                      animationDuration={900}
-                      cursor="pointer"
-                      onClick={(d) => { const t = d.payload as TopItem; if (t) toggleProducto(t.nombre) }}
-                    >
-                      {topProdData.map((entry, i) => {
-                        const isSelected = selectedProducto === entry.nombre
-                        const isDimmed   = selectedProducto !== null && !isSelected
-                        return (
-                          <Cell
-                            key={entry.nombre}
-                            fill={AZUL_SCALE[i] ?? '#3b82f6'}
-                            opacity={isDimmed ? 0.25 : 1}
-                            stroke={isSelected ? '#1e293b' : 'transparent'}
-                            strokeWidth={isSelected ? 2 : 0}
-                          />
-                        )
-                      })}
+                    <Tooltip content={<Tip />} />
+                    <Bar dataKey="valor" name="Ingresos Bs." radius={[0, 4, 4, 0]} isAnimationActive>
+                      {topProdData.map((_: TopItem, i: number) => (
+                        <Cell key={i} fill={PROD_COLORS[i % PROD_COLORS.length]} />
+                      ))}
+                      <LabelList
+                        dataKey="valor"
+                        position="right"
+                        formatter={(v: number) => `${(v/1000).toFixed(1)}k`}
+                        style={{ fontSize: 10, fontFamily: FONT, fill: '#64748b', fontWeight: 700 }}
+                      />
                     </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )
-            }
-          </ChartCard>
-
-          {/* Top 5 clientes (clickable) */}
-          <ChartCard
-            title="Top 5 clientes"
-            subtitle={
-              selectedMes || selectedProducto
-                ? `Filtrado · Clic para ${selectedCliente ? 'cambiar' : 'seleccionar'} cliente`
-                : `Por número de pedidos · Clic para filtrar`
-            }
-            loading={loading}
-            height={200}
-          >
-            {topCliData.length === 0
-              ? <EmptyChart msg="Sin datos para el filtro actual" />
-              : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart
-                    data={topCliData}
-                    layout="vertical"
-                    margin={{ top: 0, right: 40, left: 0, bottom: 0 }}
-                    barCategoryGap="25%"
-                  >
-                    <XAxis type="number" tick={axisStyle} axisLine={false} tickLine={false} />
-                    <YAxis
-                      type="category" dataKey="nombre"
-                      tick={{ ...axisStyle, fontSize: 10 }}
-                      axisLine={false} tickLine={false} width={130}
-                    />
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-                    <Bar
-                      dataKey="valor"
-                      name="Pedidos"
-                      radius={[0, 6, 6, 0]}
-                      isAnimationActive
-                      animationDuration={900}
-                      cursor="pointer"
-                      onClick={(d) => { const t = d.payload as TopItem; if (t) toggleCliente(t.nombre) }}
-                    >
-                      {topCliData.map((entry, i) => {
-                        const isSelected = selectedCliente === entry.nombre
-                        const isDimmed   = selectedCliente !== null && !isSelected
-                        return (
-                          <Cell
-                            key={entry.nombre}
-                            fill={VERDE_SCALE[i] ?? '#16a34a'}
-                            opacity={isDimmed ? 0.25 : 1}
-                            stroke={isSelected ? '#1e293b' : 'transparent'}
-                            strokeWidth={isSelected ? 2 : 0}
-                          />
-                        )
-                      })}
-                    </Bar>
-                  </BarChart>
+                  </ComposedChart>
                 </ResponsiveContainer>
               )
             }
           </ChartCard>
         </div>
 
-        {/* ── Row 3: comparativa por zona (responsive to all filters) ── */}
+        {/* ── Row 3: Comparativa por zona ── */}
         <ChartCard
           title="Comparativa por zona"
-          subtitle={hasFilter ? 'Resultado del filtro activo' : 'Pedidos totales y entregados'}
+          subtitle="Total pedidos · Entregados · Ingresos Bs."
           loading={loading}
-          height={240}
+          height={260}
         >
           {porZonaData.length === 0
-            ? <EmptyChart msg="Sin datos para el filtro actual" onClear={clearFilters} />
+            ? <EmptyState onClear={clearFilters} />
             : (
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={porZonaData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
+              <ResponsiveContainer width="100%" height={260}>
+                <ComposedChart data={porZonaData} margin={{ top: 4, right: 20, left: -10, bottom: 0 }} barCategoryGap="28%">
                   <CartesianGrid {...gridProps} />
                   <XAxis dataKey="nombre" tick={{ ...axisStyle, fontWeight: 600 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
-                  <Tooltip content={<CustomTooltip />} />
+                  <YAxis yAxisId="cnt" orientation="left"  tick={axisStyle} axisLine={false} tickLine={false} />
+                  <YAxis
+                    yAxisId="ing" orientation="right"
+                    tick={axisStyle} axisLine={false} tickLine={false}
+                    tickFormatter={v => `${(v/1000).toFixed(0)}k`}
+                  />
+                  <Tooltip content={<Tip />} />
                   <Legend wrapperStyle={{ fontFamily: FONT, fontSize: 11 }} />
-                  <Bar dataKey="pedidos" name="Total" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={900}>
-                    {porZonaData.map((z: ZonaComp) => <Cell key={z.nombre} fill={`${z.color}60`} />)}
+                  <Bar yAxisId="cnt" dataKey="pedidos"    name="Total"        radius={[4,4,0,0]} isAnimationActive>
+                    {porZonaData.map((z: ZonaComp, i: number) => (
+                      <Cell key={z.nombre} fill={`${ZONA_COLORS[i % ZONA_COLORS.length]}40`} />
+                    ))}
                   </Bar>
-                  <Bar dataKey="entregados" name="Entregados" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={1100}>
-                    {porZonaData.map((z: ZonaComp) => <Cell key={z.nombre} fill={z.color} />)}
+                  <Bar yAxisId="cnt" dataKey="entregados" name="Entregados"   radius={[4,4,0,0]} isAnimationActive>
+                    {porZonaData.map((z: ZonaComp, i: number) => (
+                      <Cell key={z.nombre} fill={ZONA_COLORS[i % ZONA_COLORS.length]} />
+                    ))}
                   </Bar>
-                </BarChart>
+                  <Line
+                    yAxisId="ing"
+                    type="monotone"
+                    dataKey="ingresos"
+                    name="Ingresos Bs."
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: '#f59e0b' }}
+                    isAnimationActive
+                  />
+                </ComposedChart>
               </ResponsiveContainer>
             )
           }
         </ChartCard>
 
         {/* ── Mapa de clientes ── */}
-        <section
-          className="anim-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
-          style={{ animationDelay: '560ms' }}
-        >
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold text-slate-800 tracking-tight">Mapa de clientes</h2>
+              <h2 className="text-sm font-bold text-slate-800 tracking-tight">Distribución geográfica</h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Distribución geográfica en Santa Cruz de la Sierra
+                Clientes georeferenciados en Santa Cruz de la Sierra
                 {!mapaLoading && mapaClientes.length > 0 && (
-                  <> · <strong className="text-slate-600">{mapaClientes.length}</strong> clientes georeferenciados</>
+                  <> · <strong className="text-slate-600">{mapaClientes.length}</strong> clientes</>
                 )}
               </p>
             </div>
@@ -521,41 +830,25 @@ export default function Analytics() {
               OpenStreetMap
             </span>
           </div>
-
           <div className="p-5">
             {mapaLoading ? (
-              <Skeleton style={{ height: 500 }} />
+              <Skel h={500} />
             ) : mapaClientes.length === 0 ? (
               <div className="flex items-center justify-center" style={{ height: 500 }}>
                 <p className="text-sm text-slate-400">Sin clientes georeferenciados</p>
               </div>
             ) : (
-              <Suspense fallback={<Skeleton style={{ height: 500 }} />}>
+              <Suspense fallback={<Skel h={500} />}>
                 <ClientesMapa clients={mapaClientes} />
               </Suspense>
             )}
           </div>
-        </section>
+        </div>
 
         <footer className="text-center py-4">
           <p className="text-xs text-slate-400">RapiDash CRM · Distribución Farmacéutica · Santa Cruz, Bolivia</p>
         </footer>
       </main>
     </>
-  )
-}
-
-// ─── Empty state helper ───────────────────────────────────────────────────────
-
-function EmptyChart({ msg, onClear }: { msg: string; onClear?: () => void }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-10 gap-2">
-      <p className="text-sm text-slate-400">{msg}</p>
-      {onClear && (
-        <button onClick={onClear} className="text-xs font-semibold text-blue-600 hover:text-blue-800 underline">
-          Limpiar filtros
-        </button>
-      )}
-    </div>
   )
 }
