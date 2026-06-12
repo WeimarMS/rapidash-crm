@@ -354,12 +354,7 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
     setForm(prev => ({ ...prev, cliente_id: clienteId, zona_id: zonaId, repartidor_id: '' }))
   }
 
-  // Cambio manual de zona también resetea el repartidor (puede quedar fuera de zona)
-  const handleZonaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setForm(prev => ({ ...prev, zona_id: e.target.value, repartidor_id: '' }))
-  }
-
-  // Repartidores activos de la zona seleccionada (todos si no hay zona)
+  // Repartidores activos de la zona del cliente (todos si aún no hay cliente)
   const repartidoresZona = opts
     ? (form.zona_id ? opts.repartidores.filter(r => r.zona_id === form.zona_id) : opts.repartidores)
     : []
@@ -403,9 +398,16 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
               </select>
             </div>
             <div>
-              <label className={LBL}>Zona *</label>
-              <select value={form.zona_id} onChange={handleZonaChange} className={INP}>
-                <option value="">— Seleccionar —</option>
+              <label className={LBL}>
+                Zona *
+                <span className="font-normal text-slate-400"> · se asigna del cliente</span>
+              </label>
+              <select
+                value={form.zona_id}
+                disabled
+                className={`${INP} disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed`}
+              >
+                <option value="">{form.cliente_id ? '—' : '— Elegí un cliente —'}</option>
                 {opts?.zonas.map(z => <option key={z.id} value={z.id}>{z.nombre}</option>)}
               </select>
             </div>
