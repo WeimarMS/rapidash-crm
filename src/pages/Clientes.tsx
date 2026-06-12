@@ -67,7 +67,7 @@ function Drawer({ cliente, onClose, onToggleActivo }: {
       />
 
       {/* Panel */}
-      <aside className="fixed right-0 top-0 bottom-0 w-96 bg-white z-40 shadow-2xl flex flex-col overflow-hidden"
+      <aside className="fixed right-0 top-0 bottom-0 w-full sm:w-96 bg-white z-40 shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1)' }}
       >
         {/* Header strip */}
@@ -228,7 +228,7 @@ function NuevoClienteModal({ onClose, onSuccess }: {
   return (
     <>
       <div className="fixed inset-0 bg-slate-900/50 z-40 backdrop-blur-[2px]" onClick={onClose} />
-      <div className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-lg p-6"
+      <div className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-slate-100 w-[calc(100vw-2rem)] max-w-lg p-6 max-h-[90vh] overflow-y-auto"
         style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
         <div className="flex items-start justify-between mb-5">
           <div>
@@ -245,7 +245,7 @@ function NuevoClienteModal({ onClose, onSuccess }: {
             <label className={LBL}>Nombre *</label>
             <input type="text" value={form.nombre} onChange={set('nombre')} placeholder="Ej. Farmacia Central" className={INP} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={LBL}>Tipo *</label>
               <select value={form.tipo} onChange={set('tipo')} className={INP}>
@@ -267,7 +267,7 @@ function NuevoClienteModal({ onClose, onSuccess }: {
             <label className={LBL}>Dirección *</label>
             <input type="text" value={form.direccion} onChange={set('direccion')} placeholder="Av. o calle, número, referencia" className={INP} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={LBL}>Teléfono</label>
               <input type="tel" value={form.telefono} onChange={set('telefono')} placeholder="Ej. 77712345" className={INP} />
@@ -277,7 +277,7 @@ function NuevoClienteModal({ onClose, onSuccess }: {
               <input type="email" value={form.email} onChange={set('email')} placeholder="correo@ejemplo.com" className={INP} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={LBL}>Contacto</label>
               <input type="text" value={form.contacto_nombre} onChange={set('contacto_nombre')} placeholder="Nombre del responsable" className={INP} />
@@ -384,7 +384,7 @@ export default function Clientes() {
       `}</style>
 
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between">
+      <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>
             Clientes
@@ -403,7 +403,7 @@ export default function Clientes() {
         </button>
       </header>
 
-      <main className="flex-1 px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
 
         {error && (
           <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm font-medium">

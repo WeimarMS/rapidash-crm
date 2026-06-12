@@ -460,7 +460,7 @@ export default function Analytics() {
   return (
     <>
       {/* ── Header ── */}
-      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-slate-100 px-6 py-3">
+      <header className="sticky top-14 lg:top-0 z-20 bg-white/95 backdrop-blur border-b border-slate-100 px-4 sm:px-6 py-3">
         <div className="flex flex-col gap-3 max-w-7xl mx-auto">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
             <div>
@@ -538,7 +538,7 @@ export default function Analytics() {
         </div>
       </header>
 
-      <main className="flex-1 px-6 py-6 max-w-7xl w-full mx-auto space-y-5">
+      <main className="flex-1 px-4 sm:px-6 py-6 max-w-7xl w-full mx-auto space-y-5">
         {error && (
           <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm">{error}</div>
         )}

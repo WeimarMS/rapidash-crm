@@ -61,7 +61,7 @@ function RegistrarIncidenciaModal({ onClose, onSuccess }: {
     <>
       <div className="fixed inset-0 bg-slate-900/50 z-40 backdrop-blur-[2px]" onClick={onClose} />
       <div
-        className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-md p-6 space-y-5"
+        className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-slate-100 w-[calc(100vw-2rem)] max-w-md p-6 space-y-5 max-h-[90vh] overflow-y-auto"
         style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}
       >
         {/* Header */}
@@ -197,7 +197,7 @@ export default function Incidencias() {
 
   return (
     <>
-      <header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between">
+      <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Incidencias</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
@@ -212,10 +212,10 @@ export default function Incidencias() {
         </button>
       </header>
 
-      <main className="flex-1 px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
         {error && <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {loading ? Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-16" />) : (
             <>
               <StatCard label="Total" value={incidencias.length} color="#1e40af" />
@@ -242,7 +242,7 @@ export default function Incidencias() {
           <div className="px-6 py-3.5 border-b border-slate-100">
             <p className="text-xs font-semibold text-slate-500">{loading ? '…' : `${filtered.length} incidencia${filtered.length!==1?'s':''}`}</p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             {!loading && incidencias.length === 0 ? (
               <div className="py-20 text-center space-y-3">
                 <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center bg-emerald-50">
@@ -291,6 +291,54 @@ export default function Incidencias() {
               </table>
             )}
           </div>
+
+          {/* Vista cards en móvil */}
+          <div className="md:hidden">
+            {loading ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+              </div>
+            ) : incidencias.length === 0 ? (
+              <div className="py-20 text-center space-y-3 px-4">
+                <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center bg-emerald-50">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth={1.5} className="w-7 h-7"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <p className="text-base font-bold text-slate-700">Sin incidencias registradas</p>
+                <p className="text-sm text-slate-400">Las operaciones están funcionando correctamente</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="px-6 py-16 text-center text-slate-400 text-sm">Sin resultados</div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {filtered.map(inc => (
+                  <button
+                    key={inc.id}
+                    onClick={() => setSelected(inc)}
+                    className="w-full text-left px-4 py-3.5 hover:bg-rose-50/20 active:bg-rose-50/40 transition-colors space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 capitalize">{inc.tipo}</span>
+                      <EstadoBadgeInc estado={inc.estado} />
+                    </div>
+                    <p className="text-sm text-slate-700 line-clamp-2">{inc.descripcion}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 min-w-0">
+                        {inc.pedido_codigo && (
+                          <span className="font-data text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md flex-shrink-0">{inc.pedido_codigo}</span>
+                        )}
+                        {inc.repartidor_nombre && (
+                          <span className="text-xs text-slate-500 truncate">{inc.repartidor_nombre}</span>
+                        )}
+                      </span>
+                      <span className="text-xs text-slate-400 flex-shrink-0">
+                        {new Date(inc.created_at).toLocaleDateString('es-BO',{day:'2-digit',month:'2-digit',year:'2-digit'})}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
@@ -321,7 +369,7 @@ export default function Incidencias() {
       {selected && (
         <>
           <div className="fixed inset-0 bg-slate-900/40 z-30 backdrop-blur-[1px]" onClick={()=>setSelected(null)} />
-          <aside className="fixed right-0 top-0 bottom-0 w-96 bg-white z-40 shadow-2xl flex flex-col slide-in-right">
+          <aside className="fixed right-0 top-0 bottom-0 w-full sm:w-96 bg-white z-40 shadow-2xl flex flex-col slide-in-right">
             <div className="px-6 pt-6 pb-5 border-b border-slate-100 flex items-start justify-between">
               <div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Incidencia</p>

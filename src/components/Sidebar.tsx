@@ -88,60 +88,196 @@ const ROL_CFG: Record<Rol, { label: string; bg: string; text: string }> = {
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
+// Desktop (lg+): rail fijo de iconos de 64px.
+// Móvil: barra superior fija con hamburguesa que abre un drawer lateral.
 
 export default function Sidebar() {
   const { profile } = useAuth()
   const rol         = profile?.rol ?? 'cliente'
   const visibleItems = NAV_ITEMS.filter(item => canAccess(rol, item.path))
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Cerrar drawer con Escape
+  useEffect(() => {
+    if (!drawerOpen) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setDrawerOpen(false) }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [drawerOpen])
 
   return (
-    <aside
-      className="fixed left-0 top-0 bottom-0 w-16 flex flex-col items-center py-5 gap-1 z-20"
-      style={{ background: '#0f172a' }}
-    >
-      {/* Brand mark */}
-      <div className="mb-5">
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-          style={{ background: '#15803d' }}
-        >
-          RD
+    <>
+      {/* ── Desktop rail ── */}
+      <aside
+        className="hidden lg:flex fixed left-0 top-0 bottom-0 w-16 flex-col items-center py-5 gap-1 z-20"
+        style={{ background: '#0f172a' }}
+      >
+        <div className="mb-5">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm"
+            style={{ background: '#15803d' }}
+          >
+            RD
+          </div>
         </div>
+
+        <nav className="flex flex-col items-center gap-1 flex-1">
+          {visibleItems.map(({ label, path, icon }) => (
+            <NavLink
+              key={label}
+              to={path}
+              end={path === '/'}
+              title={label}
+              className={({ isActive }) =>
+                `relative w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                  isActive ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                }`
+              }
+              style={({ isActive }) => isActive ? { background: 'rgba(30,64,175,0.4)' } : {}}
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span
+                      className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full"
+                      style={{ background: '#15803d' }}
+                    />
+                  )}
+                  {icon}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+
+        <UserMenu />
+      </aside>
+
+      {/* ── Mobile top bar ── */}
+      <div
+        className="lg:hidden fixed top-0 inset-x-0 h-14 z-30 flex items-center justify-between px-4"
+        style={{ background: '#0f172a' }}
+      >
+        <button
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Abrir menú"
+          className="w-10 h-10 -ml-2 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition-colors"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs"
+            style={{ background: '#15803d' }}
+          >
+            RD
+          </div>
+          <span className="text-white font-extrabold text-sm tracking-tight">RapiDash</span>
+        </div>
+
+        {/* Espaciador simétrico al botón hamburguesa */}
+        <div className="w-10 h-10 -mr-2" />
       </div>
 
-      {/* Nav */}
-      <nav className="flex flex-col items-center gap-1 flex-1">
-        {visibleItems.map(({ label, path, icon }) => (
-          <NavLink
-            key={label}
-            to={path}
-            end={path === '/'}
-            title={label}
-            className={({ isActive }) =>
-              `relative w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                isActive ? 'text-white' : 'text-slate-500 hover:text-slate-300'
-              }`
-            }
-            style={({ isActive }) => isActive ? { background: 'rgba(30,64,175,0.4)' } : {}}
+      {/* ── Mobile drawer ── */}
+      {drawerOpen && (
+        <>
+          <div
+            className="lg:hidden fixed inset-0 bg-slate-900/60 z-40 backdrop-blur-[1px]"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <aside
+            className="lg:hidden fixed inset-y-0 left-0 w-72 max-w-[85vw] z-50 flex flex-col"
+            style={{ background: '#0f172a', animation: 'slideInLeft 0.22s cubic-bezier(0.16,1,0.3,1)' }}
           >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <span
-                    className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full"
-                    style={{ background: '#15803d' }}
-                  />
-                )}
-                {icon}
-              </>
-            )}
-          </NavLink>
-        ))}
-      </nav>
+            {/* Drawer header */}
+            <div className="flex items-center justify-between px-4 py-4 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm"
+                  style={{ background: '#15803d' }}
+                >
+                  RD
+                </div>
+                <span className="text-white font-extrabold tracking-tight">RapiDash CRM</span>
+              </div>
+              <button
+                onClick={() => setDrawerOpen(false)}
+                aria-label="Cerrar menú"
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
 
-      {/* User avatar */}
-      <UserMenu />
-    </aside>
+            {/* Drawer nav */}
+            <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+              {visibleItems.map(({ label, path, icon }) => (
+                <NavLink
+                  key={label}
+                  to={path}
+                  end={path === '/'}
+                  onClick={() => setDrawerOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                      isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+                    }`
+                  }
+                  style={({ isActive }) => isActive ? { background: 'rgba(30,64,175,0.4)' } : {}}
+                >
+                  {icon}
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+
+            {/* Drawer user footer */}
+            <DrawerUserFooter />
+          </aside>
+        </>
+      )}
+    </>
+  )
+}
+
+// ─── Drawer user footer (móvil) ───────────────────────────────────────────────
+
+function DrawerUserFooter() {
+  const { profile, signOut } = useAuth()
+  const initials = profile
+    ? `${profile.nombre.charAt(0)}${profile.apellido.charAt(0)}`.toUpperCase()
+    : '?'
+  const fullName = profile ? `${profile.nombre} ${profile.apellido}` : '…'
+  const rolCfg   = profile ? ROL_CFG[profile.rol] : ROL_CFG.cliente
+
+  return (
+    <div className="border-t border-slate-800 px-4 py-4 space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-slate-200 text-xs font-bold flex-shrink-0">
+          {initials}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-white truncate">{fullName}</p>
+          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${rolCfg.bg} ${rolCfg.text}`}>
+            {rolCfg.label}
+          </span>
+        </div>
+      </div>
+      <button
+        onClick={() => signOut()}
+        className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+        </svg>
+        Cerrar sesión
+      </button>
+    </div>
   )
 }
 

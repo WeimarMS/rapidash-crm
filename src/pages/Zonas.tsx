@@ -111,7 +111,7 @@ export default function Zonas() {
 
   return (
     <>
-      <header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between">
+      <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Zonas</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
@@ -123,7 +123,7 @@ export default function Zonas() {
         </div>
       </header>
 
-      <main className="flex-1 px-8 py-6 max-w-7xl w-full mx-auto">
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto">
         {error && <div className="mb-5 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
         {loading ? (

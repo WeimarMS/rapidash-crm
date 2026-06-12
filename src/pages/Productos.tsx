@@ -74,7 +74,7 @@ function NuevoProductoModal({ onClose, onSuccess }: {
   return (
     <>
       <div className="fixed inset-0 bg-slate-900/50 z-40 backdrop-blur-[2px]" onClick={onClose} />
-      <div className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-lg p-6"
+      <div className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-slate-100 w-[calc(100vw-2rem)] max-w-lg p-6 max-h-[90vh] overflow-y-auto"
         style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
         <div className="flex items-start justify-between mb-5">
           <div>
@@ -95,7 +95,7 @@ function NuevoProductoModal({ onClose, onSuccess }: {
             <textarea value={form.descripcion} onChange={set('descripcion')} rows={2}
               placeholder="Indicaciones, presentación…" className={`${INP} resize-none`} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={LBL}>Categoría *</label>
               <select value={form.categoria} onChange={set('categoria')} className={INP}>
@@ -109,7 +109,7 @@ function NuevoProductoModal({ onClose, onSuccess }: {
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className={LBL}>Precio (Bs.) *</label>
               <input type="number" min="0" step="0.01" value={form.precio_unitario || ''} onChange={set('precio_unitario')} placeholder="0.00" className={INP} />
@@ -185,7 +185,7 @@ export default function Productos() {
 
   return (
     <>
-      <header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between">
+      <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Productos</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
@@ -196,7 +196,7 @@ export default function Productos() {
         </button>
       </header>
 
-      <main className="flex-1 px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
         {error && <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
         {/* Stats */}

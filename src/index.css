@@ -53,4 +53,9 @@ body {
 }
 .slide-in-right { animation: slideInRight 0.28s cubic-bezier(0.16,1,0.3,1); }
 
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
 .font-data { font-family: 'DM Mono', 'Courier New', monospace; }

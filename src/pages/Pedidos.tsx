@@ -93,7 +93,7 @@ function CambiarEstadoModal({ pedido, onClose, onSuccess }: {
     <>
       <div className="fixed inset-0 bg-slate-900/50 z-40 backdrop-blur-[2px]" onClick={onClose} />
       <div
-        className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-sm p-6 space-y-5"
+        className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-slate-100 w-[calc(100vw-2rem)] max-w-sm p-6 space-y-5"
         style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}
       >
         <div>
@@ -168,7 +168,7 @@ function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
     <>
       <div className="fixed inset-0 bg-slate-900/40 z-30 backdrop-blur-[1px]" onClick={onClose} />
       <aside
-        className="fixed right-0 top-0 bottom-0 w-[460px] bg-white z-40 shadow-2xl flex flex-col"
+        className="fixed right-0 top-0 bottom-0 w-full sm:w-[460px] bg-white z-40 shadow-2xl flex flex-col"
         style={{ animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1)' }}
       >
         {/* Header */}
@@ -364,7 +364,7 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
   return (
     <>
       <div className="fixed inset-0 bg-slate-900/50 z-40 backdrop-blur-[2px]" onClick={onClose} />
-      <div className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-lg p-6"
+      <div className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-slate-100 w-[calc(100vw-2rem)] max-w-lg p-6 max-h-[90vh] overflow-y-auto"
         style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
         <div className="flex items-start justify-between mb-5">
           <div>
@@ -377,7 +377,7 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
         </div>
         {optsErr && <p className="mb-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{optsErr}</p>}
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={LBL}>Cliente *</label>
               <select value={form.cliente_id} onChange={set('cliente_id')} className={INP}>
@@ -393,7 +393,7 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={LBL}>Repartidor</label>
               <select value={form.repartidor_id} onChange={set('repartidor_id')} className={INP}>
@@ -522,7 +522,7 @@ export default function Pedidos() {
       `}</style>
 
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between">
+      <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Pedidos</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
@@ -539,7 +539,7 @@ export default function Pedidos() {
         </button>
       </header>
 
-      <main className="flex-1 px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
 
         {error && (
           <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm font-medium">
@@ -635,7 +635,7 @@ export default function Pedidos() {
             )}
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
@@ -708,6 +708,46 @@ export default function Pedidos() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Vista cards en móvil */}
+          <div className="md:hidden">
+            {loading ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="px-6 py-16 text-center">
+                <p className="text-slate-400 text-sm">No se encontraron pedidos</p>
+                <p className="text-slate-300 text-xs mt-1">Intenta con otros filtros</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {filtered.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelected(p)}
+                    className="w-full text-left px-4 py-3.5 hover:bg-blue-50/30 active:bg-blue-50/50 transition-colors space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-data text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
+                        {p.codigo}
+                      </span>
+                      <EstadoBadge estado={p.estado} />
+                    </div>
+                    <p className="font-medium text-slate-800 text-sm truncate">{p.cliente_nombre}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: p.zona_color }}>
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.zona_color }} />
+                        {p.zona_nombre}
+                      </span>
+                      <span className="text-xs text-slate-400">{fmtFecha(p.fecha_pedido)}</span>
+                    </div>
+                    <p className="font-bold text-slate-900 text-sm">{fmtBs(p.total)}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>

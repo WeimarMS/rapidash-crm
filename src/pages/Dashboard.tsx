@@ -322,7 +322,7 @@ export default function Dashboard() {
   return (
     <>
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4">
+      <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <div>
             <h1
@@ -371,7 +371,7 @@ export default function Dashboard() {
       </header>
 
       {/* Main */}
-      <main className="flex-1 px-8 py-6 space-y-6 max-w-7xl w-full mx-auto">
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-7xl w-full mx-auto">
 
         {error && (
           <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm font-medium">

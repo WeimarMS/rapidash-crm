@@ -17,7 +17,7 @@ export default function ComingSoon() {
 
   return (
     <>
-      <header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4">
+      <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4">
         <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>
           {modulo}
         </h1>
