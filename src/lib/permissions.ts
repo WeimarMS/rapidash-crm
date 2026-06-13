@@ -10,15 +10,15 @@ import type { Rol } from './auth'
 // Roles que pueden acceder a cada ruta del dashboard.
 // Una ruta sin entrada acá se considera permitida para cualquier rol autenticado.
 export const ROUTE_ROLES: Record<string, Rol[]> = {
-  '/':             ['admin', 'supervisor_zona'],
-  '/pedidos':      ['admin', 'supervisor_zona', 'repartidor', 'cliente'],
-  '/clientes':     ['admin', 'supervisor_zona'],
-  '/productos':    ['admin', 'supervisor_zona'],
-  '/repartidores': ['admin', 'supervisor_zona'],
-  '/rutas':        ['admin', 'supervisor_zona', 'repartidor'],
-  '/zonas':        ['admin'],
-  '/incidencias':  ['admin', 'supervisor_zona'],
-  '/analytics':    ['admin', 'supervisor_zona'],
+  '/':             ['admin', 'supervisor_zona', 'demo'],
+  '/pedidos':      ['admin', 'supervisor_zona', 'repartidor', 'cliente', 'demo'],
+  '/clientes':     ['admin', 'supervisor_zona', 'demo'],
+  '/productos':    ['admin', 'supervisor_zona', 'demo'],
+  '/repartidores': ['admin', 'supervisor_zona', 'demo'],
+  '/rutas':        ['admin', 'supervisor_zona', 'repartidor', 'demo'],
+  '/zonas':        ['admin', 'demo'],
+  '/incidencias':  ['admin', 'supervisor_zona', 'demo'],
+  '/analytics':    ['admin', 'supervisor_zona', 'demo'],
   '/usuarios':     ['admin'],
 }
 
@@ -34,6 +34,7 @@ export function defaultRouteForRole(rol: Rol): string {
   switch (rol) {
     case 'admin':
     case 'supervisor_zona':
+    case 'demo':
       return '/'
     case 'repartidor':
     case 'cliente':

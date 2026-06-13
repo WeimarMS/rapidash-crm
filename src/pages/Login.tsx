@@ -115,6 +115,9 @@ const HIGHLIGHTS = [
 
 // ─── Página ───────────────────────────────────────────────────────────────────
 
+const DEMO_EMAIL    = import.meta.env.VITE_DEMO_EMAIL as string | undefined
+const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD as string | undefined
+
 export default function Login() {
   const { signIn }  = useAuth()
   const navigate    = useNavigate()
@@ -123,6 +126,8 @@ export default function Login() {
   const [showPwd,   setShowPwd]  = useState(false)
   const [loading,   setLoading]  = useState(false)
   const [error,     setError]    = useState<string | null>(null)
+
+  const demoAvailable = Boolean(DEMO_EMAIL && DEMO_PASSWORD)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -133,6 +138,21 @@ export default function Login() {
       navigate('/', { replace: true })
     } catch {
       setError('Usuario o contraseña incorrectos')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDemoLogin = async () => {
+    if (!DEMO_EMAIL || !DEMO_PASSWORD) return
+    setUsuario(DEMO_EMAIL)
+    setPassword(DEMO_PASSWORD)
+    setError(null); setLoading(true)
+    try {
+      await signIn(DEMO_EMAIL, DEMO_PASSWORD)
+      navigate('/', { replace: true })
+    } catch {
+      setError('No se pudo iniciar el demo. Intentá de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -163,7 +183,16 @@ export default function Login() {
         <div className="relative z-10">
           {/* Logo + nombre: fila en móvil, columna en desktop */}
           <div className="anim-card flex items-center gap-4 lg:flex-col lg:items-start lg:gap-6">
-            <LogoCapsula size={56} />
+            <div className="relative flex-shrink-0">
+              {/* Glow de marca detrás de la cápsula */}
+              <span
+                aria-hidden
+                className="absolute -inset-5 rounded-full blur-2xl pointer-events-none"
+                style={{ background: 'rgba(34,197,94,0.28)' }}
+              />
+              <span className="relative hidden lg:block"><LogoCapsula size={88} /></span>
+              <span className="relative lg:hidden"><LogoCapsula size={56} /></span>
+            </div>
             <div>
               <h1 className="text-2xl lg:text-4xl font-extrabold text-white tracking-tight">
                 RapiDash <span className="text-emerald-400">CRM</span>
@@ -204,13 +233,13 @@ export default function Login() {
         </div>
 
         {/* Footer izquierda — solo desktop */}
-        <p className="hidden lg:block absolute bottom-6 left-16 z-10 rd-mono text-[11px] text-slate-500">
-          RapiDash S.R.L. · Santa Cruz, Bolivia · Portfolio Demo
+        <p className="hidden lg:block absolute bottom-6 left-16 z-10 rd-mono text-xs text-emerald-300/80">
+          {'// built by Weimar Miranda'}
         </p>
       </section>
 
       {/* ── Columna derecha: login ── */}
-      <section className="flex-1 lg:w-1/3 bg-white flex flex-col items-center justify-center px-6 py-10 lg:py-0">
+      <section className="flex-1 lg:w-1/3 bg-white flex flex-col items-center justify-center px-6 py-10 lg:px-10 lg:py-12">
         <div className="w-full max-w-sm anim-card" style={{ animationDelay: '160ms' }}>
           <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Iniciar sesión</h2>
           <p className="text-sm text-slate-400 mt-1 mb-8">Accedé a tu panel de operaciones</p>
@@ -296,10 +325,60 @@ export default function Login() {
 
           </form>
 
-          {/* Footer derecha (visible en móvil, donde la izquierda no muestra el suyo) */}
-          <p className="lg:hidden text-center text-slate-400 text-xs mt-8 rd-mono">
-            RapiDash S.R.L. · Santa Cruz, Bolivia · Portfolio Demo
-          </p>
+          {/* ── Acceso demo ── */}
+          {demoAvailable && (
+            <>
+              <div className="flex items-center gap-3 my-6">
+                <span className="flex-1 h-px bg-slate-200" />
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">o</span>
+                <span className="flex-1 h-px bg-slate-200" />
+              </div>
+              <button
+                type="button"
+                onClick={handleDemoLogin}
+                disabled={loading}
+                className="w-full py-2.5 rounded-xl text-sm font-bold border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                Entrar al Demo
+              </button>
+              <p className="text-[11px] text-slate-400 text-center mt-2">
+                Acceso de solo lectura a todo el sistema
+              </p>
+            </>
+          )}
+
+          {/* ── Contacto ── */}
+          <div className="mt-10 pt-6 border-t border-slate-100 text-center space-y-1.5">
+            <p className="text-sm font-bold text-slate-800">Like what you see?</p>
+            <p className="text-xs text-slate-500 pb-2">
+              I build custom dashboards &amp; CRMs for your business.
+            </p>
+            <p className="text-xs text-slate-500">🌐 Available for remote work worldwide</p>
+            <p className="text-xs">
+              <a
+                href="https://wa.me/59176700989"
+                target="_blank" rel="noopener noreferrer"
+                className="text-emerald-700 font-semibold hover:underline"
+              >
+                📱 +591 76700989 (WhatsApp)
+              </a>
+            </p>
+            <p className="text-xs">
+              <a
+                href="mailto:weimar.miranda.s@gmail.com"
+                className="text-emerald-700 font-semibold hover:underline"
+              >
+                ✉ weimar.miranda.s@gmail.com
+              </a>
+            </p>
+            <p className="rd-mono text-[11px] text-slate-400 pt-2">
+              Weimar Miranda — BI &amp; Automation Consultant
+            </p>
+          </div>
         </div>
       </section>
     </div>

@@ -81,10 +81,11 @@ const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode }[] = [
 // ─── Role display config ──────────────────────────────────────────────────────
 
 const ROL_CFG: Record<Rol, { label: string; bg: string; text: string }> = {
-  admin:           { label: 'Admin',      bg: 'bg-blue-50',   text: 'text-blue-700'   },
-  supervisor_zona: { label: 'Supervisor', bg: 'bg-violet-50', text: 'text-violet-700' },
-  repartidor:      { label: 'Repartidor', bg: 'bg-orange-50', text: 'text-orange-700' },
-  cliente:         { label: 'Cliente',    bg: 'bg-teal-50',   text: 'text-teal-700'   },
+  admin:           { label: 'Admin',      bg: 'bg-blue-50',    text: 'text-blue-700'    },
+  supervisor_zona: { label: 'Supervisor', bg: 'bg-violet-50',  text: 'text-violet-700'  },
+  repartidor:      { label: 'Repartidor', bg: 'bg-orange-50',  text: 'text-orange-700'  },
+  cliente:         { label: 'Cliente',    bg: 'bg-teal-50',    text: 'text-teal-700'    },
+  demo:            { label: 'Demo',       bg: 'bg-emerald-50', text: 'text-emerald-700' },
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────

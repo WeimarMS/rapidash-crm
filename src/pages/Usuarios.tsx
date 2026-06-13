@@ -9,11 +9,13 @@ import { useAuth } from '../contexts/AuthContext'
 interface Zona { id: string; nombre: string }
 
 const ROL_CFG: Record<Rol, { label: string; bg: string; text: string; dot: string }> = {
-  admin:           { label: 'Admin',      bg: 'bg-blue-50',   text: 'text-blue-700',   dot: '#1d4ed8' },
-  supervisor_zona: { label: 'Supervisor', bg: 'bg-violet-50', text: 'text-violet-700', dot: '#7c3aed' },
-  repartidor:      { label: 'Repartidor', bg: 'bg-orange-50', text: 'text-orange-700', dot: '#ea580c' },
-  cliente:         { label: 'Cliente',    bg: 'bg-teal-50',   text: 'text-teal-700',   dot: '#0891b2' },
+  admin:           { label: 'Admin',      bg: 'bg-blue-50',    text: 'text-blue-700',    dot: '#1d4ed8' },
+  supervisor_zona: { label: 'Supervisor', bg: 'bg-violet-50',  text: 'text-violet-700',  dot: '#7c3aed' },
+  repartidor:      { label: 'Repartidor', bg: 'bg-orange-50',  text: 'text-orange-700',  dot: '#ea580c' },
+  cliente:         { label: 'Cliente',    bg: 'bg-teal-50',    text: 'text-teal-700',    dot: '#0891b2' },
+  demo:            { label: 'Demo',       bg: 'bg-emerald-50', text: 'text-emerald-700', dot: '#059669' },
 }
+// El rol demo no se ofrece al crear usuarios: se administra solo via SQL
 const ROLES: Rol[]  = ['admin', 'supervisor_zona', 'repartidor', 'cliente']
 const ROL_NEEDS_ZONA: Rol[] = ['supervisor_zona', 'repartidor']
 
