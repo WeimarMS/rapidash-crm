@@ -68,6 +68,61 @@ INSERT INTO public.profiles (id, nombre, apellido, email, rol)
 VALUES ('00000000-0000-0000-0000-000000000099', 'Demo', 'RapiDash', 'demo@rapidash.bo', 'demo')
 ON CONFLICT (id) DO UPDATE SET rol = 'demo', apellido = 'RapiDash';
 
--- ── Verificación rápida ───────────────────────────────────────
--- SELECT id, email FROM auth.users WHERE email = 'demo@rapidash.bo';
--- SELECT rol FROM public.profiles WHERE id = '00000000-0000-0000-0000-000000000099';
+-- ── 4. Reparación de identidad y hash (GoTrue) ────────────────
+-- GoTrue rechaza con invalid_credentials a usuarios insertados por SQL si:
+--   a) falta la fila de auth.identities, o su provider_id no es el UUID
+--      del usuario, o identity_data no trae "sub"/"email"
+--   b) el hash no es bcrypt ($2a$...)
+-- Esta sección lo deja consistente. Idempotente.
+
+-- Identidad email bien formada
+INSERT INTO auth.identities (id, user_id, provider_id, provider, identity_data,
+                             last_sign_in_at, created_at, updated_at)
+VALUES (
+  gen_random_uuid(),
+  '00000000-0000-0000-0000-000000000099',
+  '00000000-0000-0000-0000-000000000099',   -- provider_id = UUID del usuario (texto)
+  'email',
+  jsonb_build_object(
+    'sub',            '00000000-0000-0000-0000-000000000099',
+    'email',          'demo@rapidash.bo',
+    'email_verified', true,
+    'phone_verified', false
+  ),
+  now(), now(), now()
+)
+ON CONFLICT (provider_id, provider)
+DO UPDATE SET identity_data = EXCLUDED.identity_data, updated_at = now();
+
+-- Re-hashear la contraseña con bcrypt (por si el salt original no era 'bf')
+UPDATE auth.users
+SET encrypted_password = extensions.crypt('Demo_RapiDash#2026', extensions.gen_salt('bf'))
+WHERE email = 'demo@rapidash.bo';
+
+-- Tokens NULL → '' (evita el error 500 "Database error querying schema")
+UPDATE auth.users SET
+  confirmation_token         = COALESCE(confirmation_token, ''),
+  recovery_token             = COALESCE(recovery_token, ''),
+  email_change               = COALESCE(email_change, ''),
+  email_change_token_new     = COALESCE(email_change_token_new, ''),
+  email_change_token_current = COALESCE(email_change_token_current, ''),
+  phone_change               = COALESCE(phone_change, ''),
+  phone_change_token         = COALESCE(phone_change_token, ''),
+  reauthentication_token     = COALESCE(reauthentication_token, '')
+WHERE email = 'demo@rapidash.bo';
+
+-- ── Diagnóstico ───────────────────────────────────────────────
+-- Correr esto para verificar el estado completo del usuario demo:
+--
+-- SELECT
+--   u.email,
+--   u.encrypted_password LIKE '$2%'                                          AS hash_es_bcrypt,
+--   u.encrypted_password = extensions.crypt('Demo_RapiDash#2026',
+--                                           u.encrypted_password)            AS password_coincide,
+--   u.email_confirmed_at IS NOT NULL                                         AS confirmado,
+--   u.banned_until, u.deleted_at, u.is_sso_user,
+--   i.provider, i.provider_id,
+--   i.identity_data ? 'sub'                                                  AS identity_tiene_sub
+-- FROM auth.users u
+-- LEFT JOIN auth.identities i ON i.user_id = u.id
+-- WHERE u.email = 'demo@rapidash.bo';

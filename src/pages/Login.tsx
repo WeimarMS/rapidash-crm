@@ -151,8 +151,8 @@ export default function Login() {
     try {
       await signIn(DEMO_EMAIL, DEMO_PASSWORD)
       navigate('/', { replace: true })
-    } catch {
-      setError('No se pudo iniciar el demo. Intentá de nuevo.')
+    } catch (e: any) {
+      setError(`No se pudo iniciar el demo: ${e?.message ?? 'error desconocido'}`)
     } finally {
       setLoading(false)
     }
