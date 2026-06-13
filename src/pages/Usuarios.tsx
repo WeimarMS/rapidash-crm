@@ -381,23 +381,25 @@ export default function Usuarios() {
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Usuarios</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
-          <BuiltByMobile />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-end gap-1.5 md:flex-row md:items-center md:gap-4">
           <BuiltBy />
-          <button onClick={() => setShowInvitar(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/>
-            </svg>
-            Invitar por email
-          </button>
-          <button onClick={() => setShowNuevo(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-            style={{ background: '#1e40af' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
-            Nuevo usuario
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button onClick={() => setShowInvitar(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/>
+              </svg>
+              Invitar por email
+            </button>
+            <button onClick={() => setShowNuevo(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+              style={{ background: '#1e40af' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo usuario
+            </button>
+          </div>
+          <BuiltByMobile />
         </div>
       </header>
 

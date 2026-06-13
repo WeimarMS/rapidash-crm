@@ -206,9 +206,8 @@ export default function Incidencias() {
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Incidencias</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
-          <BuiltByMobile />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-end gap-1.5 md:flex-row md:items-center md:gap-4">
           <BuiltBy />
           {!readOnly && (
             <button
@@ -220,6 +219,7 @@ export default function Incidencias() {
               Registrar incidencia
             </button>
           )}
+          <BuiltByMobile />
         </div>
       </header>
 

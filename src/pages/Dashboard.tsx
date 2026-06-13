@@ -349,17 +349,17 @@ export default function Dashboard() {
               Dashboard
             </h1>
             <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
-            <BuiltByMobile />
           </div>
-          <div className="flex items-center">
+          <div className="flex flex-col items-end gap-1 md:flex-row md:items-center md:gap-2.5">
             <BuiltBy />
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 ml-3 mr-2.5">
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Conectado
             </span>
             <span className={`inline-flex text-xs font-semibold px-3 py-1.5 rounded-full ${ROL_BADGE[rolActual]?.cls ?? 'bg-blue-50 text-blue-700'}`}>
               {ROL_BADGE[rolActual]?.label ?? 'Admin'}
             </span>
+            <BuiltByMobile />
           </div>
         </div>
 

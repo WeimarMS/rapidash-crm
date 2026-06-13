@@ -467,7 +467,6 @@ export default function Analytics() {
             <div>
               <h1 className="text-lg font-extrabold tracking-tight text-slate-900">Analytics</h1>
               <p className="text-xs text-slate-400 mt-0.5">Centro de inteligencia de negocio</p>
-              <BuiltByMobile />
             </div>
 
             {/* Date range slider: fila completa en móvil, inline en desktop */}
@@ -482,13 +481,14 @@ export default function Analytics() {
               </div>
             )}
 
-            <div className="flex items-center gap-4 flex-shrink-0">
+            <div className="flex flex-col items-end gap-1.5 md:flex-row md:items-center md:gap-4 flex-shrink-0">
               <BuiltBy />
               <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
                 hasFilter ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
               }`}>
                 {hasFilter ? 'Filtro activo' : `${kpiPedidos} pedidos`}
               </span>
+              <BuiltByMobile />
             </div>
           </div>
 
