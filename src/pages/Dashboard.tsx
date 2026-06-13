@@ -94,7 +94,7 @@ function KPICard({ label, value, prefix, suffix, icon, accentColor, delay = 0, i
   const animated = useCountUp(isFloat ? Math.round(value) : value)
   return (
     <div
-      className="anim-card bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5 flex flex-col gap-2 sm:gap-3 relative overflow-hidden"
+      className="anim-card bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5 flex flex-col relative overflow-hidden"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: accentColor }} />
@@ -102,8 +102,9 @@ function KPICard({ label, value, prefix, suffix, icon, accentColor, delay = 0, i
         style={{ background: accentColor }} />
       <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center absolute top-4 right-4"
         style={{ color: accentColor }} >{icon}</div>
-      <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide sm:tracking-widest mt-1 pr-10 leading-tight">{label}</p>
-      <p className="text-2xl sm:text-3xl font-bold text-slate-900 leading-none anim-num" style={{ animationDelay: `${delay + 80}ms` }}>
+      {/* min-h fija en el label → el número arranca a la misma altura en todas las cards */}
+      <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide sm:tracking-widest mt-1 pr-10 leading-tight min-h-[2.5rem]">{label}</p>
+      <p className="text-2xl sm:text-3xl font-bold text-slate-900 leading-none anim-num mt-1" style={{ animationDelay: `${delay + 80}ms` }}>
         {prefix && <span className="text-lg text-slate-400 mr-0.5">{prefix}</span>}
         {isFloat ? fmtBs(animated) : animated.toLocaleString('es-BO')}
         {suffix && <span className="text-lg text-slate-400 ml-0.5">{suffix}</span>}

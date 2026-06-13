@@ -115,14 +115,14 @@ export default function Zonas() {
       <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Zonas</h1>
-          <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+          <p className="hidden md:block text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+          <BuiltByMobile />
         </div>
-        <div className="flex flex-col items-end gap-1.5 md:flex-row md:items-center md:gap-4">
+        <div className="flex items-center gap-4">
           <BuiltBy />
           <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600">
             {loading ? '…' : `${zonas.length} zonas`}
           </span>
-          <BuiltByMobile />
         </div>
       </header>
 

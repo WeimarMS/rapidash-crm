@@ -1,7 +1,6 @@
 // Firma sutil del autor en los headers del dashboard.
 // Desktop: inline en la esquina superior derecha del header.
-// Móvil: apilada bajo el badge/botón del cluster derecho, alineada a la
-// derecha (no ocupa una línea propia ni compite con el título).
+// Móvil: reemplaza a la fecha/subtítulo bajo el título (mismo estilo y lugar).
 
 const TEXT = '// built by Weimar Miranda'
 
@@ -15,8 +14,8 @@ export default function BuiltBy() {
 
 export function BuiltByMobile() {
   return (
-    <span className="md:hidden font-data text-[10px] text-slate-300 select-none whitespace-nowrap leading-none">
+    <p className="md:hidden font-data text-xs text-slate-400 mt-0.5 select-none">
       {TEXT}
-    </span>
+    </p>
   )
 }
