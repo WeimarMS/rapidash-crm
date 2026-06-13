@@ -2,6 +2,119 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
+// ─── Logo: cápsula en movimiento ──────────────────────────────────────────────
+
+function LogoCapsula({ size = 56 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-label="RapiDash">
+      <defs>
+        <linearGradient id="rd-cap" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#22c55e" />
+          <stop offset="100%" stopColor="#15803d" />
+        </linearGradient>
+      </defs>
+      {/* Trazos de velocidad */}
+      <line x1="4"  y1="30" x2="20" y2="30" stroke="#22c55e" strokeWidth="4" strokeLinecap="round" opacity="0.25" />
+      <line x1="9"  y1="39" x2="22" y2="39" stroke="#22c55e" strokeWidth="4" strokeLinecap="round" opacity="0.45" />
+      <line x1="14" y1="48" x2="24" y2="48" stroke="#22c55e" strokeWidth="4" strokeLinecap="round" opacity="0.7" />
+      {/* Cápsula inclinada 45° apuntando arriba-derecha */}
+      <g transform="rotate(45 40 28)">
+        {/* Mitad inferior: contorno */}
+        <path
+          d="M30 28 V38 A10 10 0 0 0 50 38 V28 Z"
+          fill="white" fillOpacity="0.06"
+          stroke="#22c55e" strokeWidth="2.5"
+        />
+        {/* Mitad superior: sólida con gradiente */}
+        <path
+          d="M30 28 V18 A10 10 0 0 1 50 18 V28 Z"
+          fill="url(#rd-cap)"
+          stroke="#22c55e" strokeWidth="2.5"
+        />
+        {/* Brillo */}
+        <line x1="35" y1="14" x2="35" y2="24" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+      </g>
+    </svg>
+  )
+}
+
+// ─── Red de rutas de fondo (columna izquierda) ────────────────────────────────
+
+function RutasBackground() {
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full"
+      viewBox="0 0 800 600"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden
+    >
+      {/* Grilla urbana tenue */}
+      <g stroke="#334155" strokeWidth="1" opacity="0.18">
+        {[100, 220, 340, 460, 580].map(y => <line key={`h${y}`} x1="0" y1={y} x2="800" y2={y} />)}
+        {[130, 290, 450, 610, 740].map(x => <line key={`v${x}`} x1={x} y1="0" x2={x} y2="600" />)}
+      </g>
+      {/* Rutas de entrega */}
+      <g fill="none" stroke="#22c55e" strokeWidth="2" strokeDasharray="6 10" strokeLinecap="round" opacity="0.35">
+        <path className="rd-route" d="M60 520 L130 460 L290 460 L380 340 L450 340 L560 220" />
+        <path className="rd-route" style={{ animationDelay: '0.8s' }} d="M130 580 L130 460 L240 380 L450 380 L610 220 L740 220" />
+        <path className="rd-route" style={{ animationDelay: '1.6s' }} d="M290 560 L290 460 L450 460 L530 380 L610 380 L680 300" />
+      </g>
+      {/* Nodos: farmacias / puntos de entrega */}
+      <g>
+        {[
+          { x: 130, y: 460, c: '#22c55e' }, { x: 290, y: 460, c: '#22c55e' },
+          { x: 450, y: 340, c: '#f59e0b' }, { x: 560, y: 220, c: '#22c55e' },
+          { x: 450, y: 380, c: '#22c55e' }, { x: 610, y: 220, c: '#f59e0b' },
+          { x: 530, y: 380, c: '#22c55e' }, { x: 680, y: 300, c: '#22c55e' },
+        ].map((n, i) => (
+          <circle
+            key={i} cx={n.x} cy={n.y} r="4"
+            fill={n.c} className="rd-node"
+            style={{ animationDelay: `${i * 0.35}s` }}
+          />
+        ))}
+      </g>
+    </svg>
+  )
+}
+
+// ─── Highlights ───────────────────────────────────────────────────────────────
+
+const HIGHLIGHTS = [
+  {
+    title: 'Pedidos trazables',
+    sub: 'Códigos RD-2025-XXXX con flujo de estados completo',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4.5 h-4.5">
+      <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+      <rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>
+    </svg>,
+  },
+  {
+    title: 'Rutas por zona',
+    sub: 'Planificación diaria en las 5 zonas de Santa Cruz',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4.5 h-4.5">
+      <path d="M3 12h18M3 6l9-3 9 3M3 18l9 3 9-3"/>
+    </svg>,
+  },
+  {
+    title: 'Analytics en vivo',
+    sub: 'KPIs, tendencias e ingresos del negocio',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4.5 h-4.5">
+      <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+    </svg>,
+  },
+  {
+    title: 'Acceso por roles',
+    sub: 'Admin, supervisores, repartidores y clientes',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4.5 h-4.5">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+    </svg>,
+  },
+]
+
+// ─── Página ───────────────────────────────────────────────────────────────────
+
 export default function Login() {
   const { signIn }  = useAuth()
   const navigate    = useNavigate()
@@ -26,29 +139,81 @@ export default function Login() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: '#0f172a' }}
-    >
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+      <style>{`
+        @keyframes rdRoute { to { stroke-dashoffset: -64; } }
+        .rd-route { animation: rdRoute 4s linear infinite; }
+        @keyframes rdNode { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+        .rd-node { animation: rdNode 2.8s ease-in-out infinite; }
+        .rd-mono { font-family: 'DM Mono', 'Courier New', monospace; }
+      `}</style>
 
-        {/* Brand */}
-        <div className="flex flex-col items-center mb-8">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-extrabold text-xl mb-4 shadow-lg"
-            style={{ background: '#15803d' }}
-          >
-            RD
+      {/* ── Columna izquierda: carátula (compacta en móvil) ── */}
+      <section
+        className="relative overflow-hidden lg:w-2/3 lg:min-h-screen flex flex-col justify-center px-6 py-6 lg:px-16 lg:py-12"
+        style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}
+      >
+        <RutasBackground />
+        {/* Glow radial */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse 60% 50% at 30% 40%, rgba(34,197,94,0.10), transparent 70%)' }}
+        />
+
+        <div className="relative z-10">
+          {/* Logo + nombre: fila en móvil, columna en desktop */}
+          <div className="anim-card flex items-center gap-4 lg:flex-col lg:items-start lg:gap-6">
+            <LogoCapsula size={56} />
+            <div>
+              <h1 className="text-2xl lg:text-4xl font-extrabold text-white tracking-tight">
+                RapiDash <span className="text-emerald-400">CRM</span>
+              </h1>
+              <p className="rd-mono text-emerald-300/80 text-xs lg:text-sm mt-1">
+                {'// entrega farmacéutica de última milla'}
+              </p>
+            </div>
           </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">RapiDash CRM</h1>
-          <p className="text-slate-400 text-sm mt-1 text-center">
-            Distribución Farmacéutica · Santa Cruz de la Sierra
+
+          {/* Descripción — solo desktop */}
+          <p
+            className="anim-card hidden lg:block text-slate-300 text-base leading-relaxed max-w-lg mt-8"
+            style={{ animationDelay: '120ms' }}
+          >
+            Centro de operaciones para la distribución farmacéutica en Santa Cruz de la Sierra:
+            pedidos, rutas, repartidores y análisis del negocio en un solo panel.
           </p>
+
+          {/* Highlights — solo desktop */}
+          <div className="hidden lg:grid grid-cols-2 gap-x-8 gap-y-6 mt-10 max-w-2xl">
+            {HIGHLIGHTS.map((h, i) => (
+              <div
+                key={h.title}
+                className="anim-card flex items-start gap-3.5"
+                style={{ animationDelay: `${240 + i * 100}ms` }}
+              >
+                <span className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                  {h.icon}
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-white">{h.title}</p>
+                  <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{h.sub}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-white/10">
-          <h2 className="text-base font-bold text-slate-900 mb-6">Iniciar sesión</h2>
+        {/* Footer izquierda — solo desktop */}
+        <p className="hidden lg:block absolute bottom-6 left-16 z-10 rd-mono text-[11px] text-slate-500">
+          RapiDash S.R.L. · Santa Cruz, Bolivia · Portfolio Demo
+        </p>
+      </section>
+
+      {/* ── Columna derecha: login ── */}
+      <section className="flex-1 lg:w-1/3 bg-white flex flex-col items-center justify-center px-6 py-10 lg:py-0">
+        <div className="w-full max-w-sm anim-card" style={{ animationDelay: '160ms' }}>
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Iniciar sesión</h2>
+          <p className="text-sm text-slate-400 mt-1 mb-8">Accedé a tu panel de operaciones</p>
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
 
@@ -130,13 +295,13 @@ export default function Login() {
             </button>
 
           </form>
-        </div>
 
-        {/* Footer */}
-        <p className="text-center text-slate-600 text-xs mt-6">
-          RapiDash S.R.L. · Santa Cruz, Bolivia · Portfolio Demo
-        </p>
-      </div>
+          {/* Footer derecha (visible en móvil, donde la izquierda no muestra el suyo) */}
+          <p className="lg:hidden text-center text-slate-400 text-xs mt-8 rd-mono">
+            RapiDash S.R.L. · Santa Cruz, Bolivia · Portfolio Demo
+          </p>
+        </div>
+      </section>
     </div>
   )
 }
