@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchZonas, type ZonaDetalle } from '../lib/zonas'
-import BuiltBy from '../components/BuiltBy'
+import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
 const fmtBs = (n: number) => `Bs. ${new Intl.NumberFormat('es-BO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)}`
 
@@ -116,6 +116,7 @@ export default function Zonas() {
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Zonas</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+          <BuiltByMobile />
         </div>
         <div className="flex items-center gap-4">
           <BuiltBy />

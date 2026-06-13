@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { fetchProductos, createProducto, type Producto, type CategoriaProducto, type NewProductoInput } from '../lib/productos'
 import { useAuth } from '../contexts/AuthContext'
 import { isReadOnly } from '../lib/permissions'
-import BuiltBy from '../components/BuiltBy'
+import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
 const CATEGORIA_CFG: Record<CategoriaProducto, { label: string; bg: string; text: string; dot: string }> = {
   analgesico:  { label: 'Analgésico',  bg: 'bg-orange-50',  text: 'text-orange-700',  dot: '#ea580c' },
@@ -194,6 +194,7 @@ export default function Productos() {
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Productos</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+          <BuiltByMobile />
         </div>
         <div className="flex items-center gap-4">
           <BuiltBy />

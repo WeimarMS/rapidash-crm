@@ -18,7 +18,7 @@ import {
   type EstadoData,
 } from '../lib/analytics'
 import { fetchClientesMapData, type ClienteMapData } from '../lib/mapa'
-import BuiltBy from '../components/BuiltBy'
+import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
 const ClientesMapa = lazy(() => import('../components/ClientesMapa'))
 
@@ -467,6 +467,7 @@ export default function Analytics() {
             <div>
               <h1 className="text-lg font-extrabold tracking-tight text-slate-900">Analytics</h1>
               <p className="text-xs text-slate-400 mt-0.5">Centro de inteligencia de negocio</p>
+              <BuiltByMobile />
             </div>
 
             {/* Date range slider: fila completa en móvil, inline en desktop */}

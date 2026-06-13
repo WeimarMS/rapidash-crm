@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom'
-import BuiltBy from '../components/BuiltBy'
+import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
 const MODULE_NAMES: Record<string, string> = {
   '/pedidos':      'Pedidos',
@@ -19,9 +19,12 @@ export default function ComingSoon() {
   return (
     <>
       <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
-        <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>
-          {modulo}
-        </h1>
+        <div>
+          <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>
+            {modulo}
+          </h1>
+          <BuiltByMobile />
+        </div>
         <BuiltBy />
       </header>
       <main className="flex-1 flex items-center justify-center px-8 py-16">

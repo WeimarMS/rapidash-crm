@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { fetchRutas, fetchRutaOptions, createRuta, type Ruta, type EstadoRuta, type RutaOption } from '../lib/rutas'
 import { useAuth } from '../contexts/AuthContext'
 import { isReadOnly } from '../lib/permissions'
-import BuiltBy from '../components/BuiltBy'
+import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
 const ESTADO_CFG: Record<EstadoRuta, { label: string; bg: string; text: string; dot: string }> = {
   planificada: { label: 'Planificada', bg: 'bg-amber-50',   text: 'text-amber-700',   dot: '#d97706' },
@@ -267,6 +267,7 @@ export default function Rutas() {
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Rutas</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+          <BuiltByMobile />
         </div>
         <div className="flex items-center gap-4">
           <BuiltBy />

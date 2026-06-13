@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { fetchClientes, toggleClienteActivo, fetchZonasSimple, createCliente, type Cliente, type TipoCliente, type NewClienteInput } from '../lib/clientes'
 import { useAuth } from '../contexts/AuthContext'
 import { isReadOnly } from '../lib/permissions'
-import BuiltBy from '../components/BuiltBy'
+import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -399,6 +399,7 @@ export default function Clientes() {
             Clientes
           </h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+          <BuiltByMobile />
         </div>
         <div className="flex items-center gap-4">
           <BuiltBy />

@@ -3,7 +3,7 @@ import { fetchAllUsers, createUser, inviteUser, updateUserRole, toggleUserActivo
 import type { FullUser, Rol, NewUserInput } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import BuiltBy from '../components/BuiltBy'
+import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -381,6 +381,7 @@ export default function Usuarios() {
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Usuarios</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+          <BuiltByMobile />
         </div>
         <div className="flex items-center gap-4">
           <BuiltBy />

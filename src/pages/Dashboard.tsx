@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import BuiltBy from '../components/BuiltBy'
+import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, LabelList,
@@ -94,16 +94,16 @@ function KPICard({ label, value, prefix, suffix, icon, accentColor, delay = 0, i
   const animated = useCountUp(isFloat ? Math.round(value) : value)
   return (
     <div
-      className="anim-card bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col gap-3 relative overflow-hidden"
+      className="anim-card bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5 flex flex-col gap-2 sm:gap-3 relative overflow-hidden"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: accentColor }} />
-      <div className="absolute top-4 right-4 w-10 h-10 rounded-xl flex items-center justify-center opacity-10"
+      <div className="absolute top-4 right-4 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center opacity-10"
         style={{ background: accentColor }} />
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center absolute top-4 right-4"
+      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center absolute top-4 right-4"
         style={{ color: accentColor }} >{icon}</div>
-      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">{label}</p>
-      <p className="text-3xl font-bold text-slate-900 leading-none anim-num" style={{ animationDelay: `${delay + 80}ms` }}>
+      <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide sm:tracking-widest mt-1 pr-10 leading-tight">{label}</p>
+      <p className="text-2xl sm:text-3xl font-bold text-slate-900 leading-none anim-num" style={{ animationDelay: `${delay + 80}ms` }}>
         {prefix && <span className="text-lg text-slate-400 mr-0.5">{prefix}</span>}
         {isFloat ? fmtBs(animated) : animated.toLocaleString('es-BO')}
         {suffix && <span className="text-lg text-slate-400 ml-0.5">{suffix}</span>}
@@ -349,6 +349,7 @@ export default function Dashboard() {
               Dashboard
             </h1>
             <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+            <BuiltByMobile />
           </div>
           <div className="flex items-center">
             <BuiltBy />

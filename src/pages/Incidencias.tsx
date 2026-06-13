@@ -3,7 +3,7 @@ import { fetchIncidencias, createIncidencia, type Incidencia } from '../lib/inci
 import { fetchPedidosSelector } from '../lib/pedidos'
 import { useAuth } from '../contexts/AuthContext'
 import { isReadOnly } from '../lib/permissions'
-import BuiltBy from '../components/BuiltBy'
+import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
 function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`bg-slate-200 rounded-lg animate-pulse ${className}`} />
@@ -206,6 +206,7 @@ export default function Incidencias() {
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Incidencias</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+          <BuiltByMobile />
         </div>
         <div className="flex items-center gap-4">
           <BuiltBy />

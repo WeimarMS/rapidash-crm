@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { fetchRepartidores, toggleRepartidorActivo, fetchRepartidorFormOptions, createRepartidor, type Repartidor, type RepartidorFormOptions } from '../lib/repartidores'
 import { useAuth } from '../contexts/AuthContext'
 import { isReadOnly } from '../lib/permissions'
-import BuiltBy from '../components/BuiltBy'
+import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
 const VEHICULO_ICON: Record<string, string> = { moto: '🏍', camioneta: '🚙', furgon: '🚐' }
 
@@ -321,6 +321,7 @@ export default function Repartidores() {
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Repartidores</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+          <BuiltByMobile />
         </div>
         <div className="flex items-center gap-4">
           <BuiltBy />
