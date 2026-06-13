@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, LabelList,
@@ -271,7 +272,17 @@ function ZonasChart({
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
+const ROL_BADGE: Record<string, { label: string; cls: string }> = {
+  admin:           { label: 'Admin',      cls: 'bg-blue-50 text-blue-700'       },
+  supervisor_zona: { label: 'Supervisor', cls: 'bg-violet-50 text-violet-700'   },
+  repartidor:      { label: 'Repartidor', cls: 'bg-orange-50 text-orange-700'   },
+  cliente:         { label: 'Cliente',    cls: 'bg-teal-50 text-teal-700'       },
+  demo:            { label: 'Demo',       cls: 'bg-emerald-50 text-emerald-700' },
+}
+
 export default function Dashboard() {
+  const { profile }                         = useAuth()
+  const rolActual                           = profile?.rol ?? 'admin'
   const [raw, setRaw]                       = useState<DashboardRaw | null>(null)
   const [error, setError]                   = useState<string | null>(null)
   const [selectedZona, setSelectedZona]     = useState<string | null>(null)
@@ -338,12 +349,14 @@ export default function Dashboard() {
             </h1>
             <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700">
+          <div className="flex items-center">
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 mr-2.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Conectado
             </span>
-            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-50 text-blue-700">Admin</span>
+            <span className={`inline-flex text-xs font-semibold px-3 py-1.5 rounded-full ${ROL_BADGE[rolActual]?.cls ?? 'bg-blue-50 text-blue-700'}`}>
+              {ROL_BADGE[rolActual]?.label ?? 'Admin'}
+            </span>
           </div>
         </div>
 

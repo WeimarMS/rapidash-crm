@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchIncidencias, createIncidencia, type Incidencia } from '../lib/incidencias'
 import { fetchPedidosSelector } from '../lib/pedidos'
+import { useAuth } from '../contexts/AuthContext'
+import { isReadOnly } from '../lib/permissions'
 
 function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`bg-slate-200 rounded-lg animate-pulse ${className}`} />
@@ -170,6 +172,8 @@ export default function Incidencias() {
   const [estadoFilter, setEstadoFilter]   = useState<'todos' | 'pendiente' | 'resuelta'>('todos')
   const [selected, setSelected]           = useState<Incidencia | null>(null)
   const [showModal, setShowModal]         = useState(false)
+  const { profile } = useAuth()
+  const readOnly = isReadOnly(profile?.rol)
   const [toast, setToast]                 = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
 
   const showToast = (type: 'success' | 'error', msg: string) => {
@@ -202,14 +206,16 @@ export default function Incidencias() {
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Incidencias</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-          style={{ background: '#dc2626' }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
-          Registrar incidencia
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+            style={{ background: '#dc2626' }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
+            Registrar incidencia
+          </button>
+        )}
       </header>
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">

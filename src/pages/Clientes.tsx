@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchClientes, toggleClienteActivo, fetchZonasSimple, createCliente, type Cliente, type TipoCliente, type NewClienteInput } from '../lib/clientes'
+import { useAuth } from '../contexts/AuthContext'
+import { isReadOnly } from '../lib/permissions'
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -51,6 +53,8 @@ function Drawer({ cliente, onClose, onToggleActivo }: {
 }) {
   const [saving, setSaving]   = useState(false)
   const [actError, setActError] = useState<string | null>(null)
+  const { profile } = useAuth()
+  const readOnly = isReadOnly(profile?.rol)
 
   const fmtBs = (n: number | null) =>
     n == null ? '—' : `Bs. ${new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2 }).format(n)}`
@@ -123,6 +127,7 @@ function Drawer({ cliente, onClose, onToggleActivo }: {
             {actError}
           </div>
         )}
+        {!readOnly && (
         <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
           <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
             Editar
@@ -152,6 +157,7 @@ function Drawer({ cliente, onClose, onToggleActivo }: {
             {saving ? 'Guardando…' : cliente.activo ? 'Suspender' : 'Activar'}
           </button>
         </div>
+        )}
       </aside>
     </>
   )
@@ -319,6 +325,8 @@ export default function Clientes() {
   const [selected, setSelected]       = useState<Cliente | null>(null)
   const [toast, setToast]             = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const [showNuevo, setShowNuevo]     = useState(false)
+  const { profile } = useAuth()
+  const readOnly = isReadOnly(profile?.rol)
 
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg })
@@ -391,16 +399,18 @@ export default function Clientes() {
           </h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
         </div>
-        <button
-          onClick={() => setShowNuevo(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          style={{ background: '#1e40af' }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
-            <path d="M12 5v14M5 12h14"/>
-          </svg>
-          Nuevo cliente
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => setShowNuevo(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: '#1e40af' }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Nuevo cliente
+          </button>
+        )}
       </header>
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">

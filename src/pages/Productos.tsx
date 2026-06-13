@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchProductos, createProducto, type Producto, type CategoriaProducto, type NewProductoInput } from '../lib/productos'
+import { useAuth } from '../contexts/AuthContext'
+import { isReadOnly } from '../lib/permissions'
 
 const CATEGORIA_CFG: Record<CategoriaProducto, { label: string; bg: string; text: string; dot: string }> = {
   analgesico:  { label: 'Analgésico',  bg: 'bg-orange-50',  text: 'text-orange-700',  dot: '#ea580c' },
@@ -156,6 +158,8 @@ export default function Productos() {
   const [soloAlerta, setSoloAlerta] = useState(false)
   const [toast, setToast]           = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const [showNuevo, setShowNuevo]   = useState(false)
+  const { profile } = useAuth()
+  const readOnly = isReadOnly(profile?.rol)
 
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg }); setTimeout(() => setToast(null), 3500)
@@ -190,10 +194,12 @@ export default function Productos() {
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Productos</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
         </div>
-        <button onClick={() => setShowNuevo(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity" style={{ background: '#1e40af' }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
-          Nuevo producto
-        </button>
+        {!readOnly && (
+          <button onClick={() => setShowNuevo(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity" style={{ background: '#1e40af' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
+            Nuevo producto
+          </button>
+        )}
       </header>
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
@@ -299,7 +305,9 @@ export default function Productos() {
                         )}
                       </td>
                       <td className="px-6 py-3.5">
-                        <button className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-blue-50">Editar</button>
+                        {!readOnly && (
+                          <button className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-blue-50">Editar</button>
+                        )}
                       </td>
                     </tr>
                   )

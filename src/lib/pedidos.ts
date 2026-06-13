@@ -123,7 +123,6 @@ export interface NewPedidoInput {
   repartidor_id:          string | null
   zona_id:                string
   fecha_entrega_estimada: string
-  tipo_pago:              'contado' | 'credito' | 'transferencia'
   notas:                  string
 }
 
@@ -151,7 +150,6 @@ export async function createPedido(input: NewPedidoInput): Promise<Pedido> {
       repartidor_id:          input.repartidor_id || null,
       zona_id:                input.zona_id,
       fecha_entrega_estimada: input.fecha_entrega_estimada || null,
-      tipo_pago:              input.tipo_pago,
       notas:                  input.notas || null,
       estado:                 'pendiente',
       total:                  0,

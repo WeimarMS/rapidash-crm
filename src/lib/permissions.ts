@@ -22,6 +22,12 @@ export const ROUTE_ROLES: Record<string, Rol[]> = {
   '/usuarios':     ['admin'],
 }
 
+// El rol demo navega todo pero no escribe: las páginas ocultan sus
+// botones de creación/edición con esto (el RLS igual bloquea en la BD).
+export function isReadOnly(rol: Rol | null | undefined): boolean {
+  return rol === 'demo'
+}
+
 export function canAccess(rol: Rol, path: string): boolean {
   const allowed = ROUTE_ROLES[path]
   return allowed ? allowed.includes(rol) : true

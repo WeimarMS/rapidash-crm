@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchRepartidores, toggleRepartidorActivo, fetchRepartidorFormOptions, createRepartidor, type Repartidor, type RepartidorFormOptions } from '../lib/repartidores'
+import { useAuth } from '../contexts/AuthContext'
+import { isReadOnly } from '../lib/permissions'
 
 const VEHICULO_ICON: Record<string, string> = { moto: '🏍', camioneta: '🚙', furgon: '🚐' }
 
@@ -25,6 +27,8 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
   const [saving, setSaving]     = useState(false)
   const [actError, setActError] = useState<string | null>(null)
   const tasaColor = rep.tasa_entrega >= 80 ? '#16a34a' : rep.tasa_entrega >= 60 ? '#d97706' : '#dc2626'
+  const { profile } = useAuth()
+  const readOnly = isReadOnly(profile?.rol)
   return (
     <>
       <div className="fixed inset-0 bg-slate-900/40 z-30 backdrop-blur-[1px]" onClick={onClose} />
@@ -106,29 +110,31 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
             {actError}
           </div>
         )}
-        <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
-          <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Editar</button>
-          <button
-            disabled={saving}
-            onClick={async () => {
-              setActError(null)
-              setSaving(true)
-              try { await onToggleActivo(!rep.activo) }
-              catch (e: any) { setActError(e.message) }
-              finally { setSaving(false) }
-            }}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-            style={{ background: rep.activo ? '#fff1f2' : '#f0fdf4', color: rep.activo ? '#e11d48' : '#16a34a' }}
-          >
-            {saving && (
-              <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25"/>
-                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-              </svg>
-            )}
-            {saving ? 'Guardando…' : rep.activo ? 'Desactivar' : 'Activar'}
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
+            <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Editar</button>
+            <button
+              disabled={saving}
+              onClick={async () => {
+                setActError(null)
+                setSaving(true)
+                try { await onToggleActivo(!rep.activo) }
+                catch (e: any) { setActError(e.message) }
+                finally { setSaving(false) }
+              }}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+              style={{ background: rep.activo ? '#fff1f2' : '#f0fdf4', color: rep.activo ? '#e11d48' : '#16a34a' }}
+            >
+              {saving && (
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25"/>
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+                </svg>
+              )}
+              {saving ? 'Guardando…' : rep.activo ? 'Desactivar' : 'Activar'}
+            </button>
+          </div>
+        )}
       </aside>
     </>
   )
@@ -263,6 +269,8 @@ export default function Repartidores() {
   const [selected, setSelected]         = useState<Repartidor | null>(null)
   const [toast, setToast]               = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const [showNuevo, setShowNuevo]       = useState(false)
+  const { profile } = useAuth()
+  const readOnly = isReadOnly(profile?.rol)
 
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg })
@@ -313,10 +321,12 @@ export default function Repartidores() {
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Repartidores</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
         </div>
-        <button onClick={() => setShowNuevo(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity" style={{ background: '#1e40af' }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
-          Nuevo repartidor
-        </button>
+        {!readOnly && (
+          <button onClick={() => setShowNuevo(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity" style={{ background: '#1e40af' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
+            Nuevo repartidor
+          </button>
+        )}
       </header>
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
