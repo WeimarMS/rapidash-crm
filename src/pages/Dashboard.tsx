@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
+import BuiltBy from '../components/BuiltBy'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, LabelList,
@@ -348,9 +348,11 @@ export default function Dashboard() {
             >
               Dashboard
             </h1>
-            <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+            <p className="hidden md:block text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
+            {/* En móvil, la firma reemplaza a la fecha en el mismo lugar */}
+            <p className="md:hidden font-data text-xs text-slate-400 mt-0.5 select-none">{'// built by Weimar Miranda'}</p>
           </div>
-          <div className="flex flex-col items-end gap-1 md:flex-row md:items-center md:gap-2.5">
+          <div className="flex items-center gap-2.5">
             <BuiltBy />
             <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -359,7 +361,6 @@ export default function Dashboard() {
             <span className={`inline-flex text-xs font-semibold px-3 py-1.5 rounded-full ${ROL_BADGE[rolActual]?.cls ?? 'bg-blue-50 text-blue-700'}`}>
               {ROL_BADGE[rolActual]?.label ?? 'Admin'}
             </span>
-            <BuiltByMobile />
           </div>
         </div>
 
