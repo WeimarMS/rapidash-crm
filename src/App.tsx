@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import LogoCapsula from './components/LogoCapsula'
 import { canAccess, defaultRouteForRole } from './lib/permissions'
 import Layout       from './components/Layout'
 import Login        from './pages/Login'
@@ -20,10 +21,7 @@ function LoadingScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#0f172a' }}>
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-extrabold text-lg"
-          style={{ background: '#15803d' }}>
-          RD
-        </div>
+        <LogoCapsula size={48} />
         <svg className="animate-spin w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25"/>
           <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>

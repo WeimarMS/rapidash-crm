@@ -18,6 +18,7 @@ import {
   type EstadoData,
 } from '../lib/analytics'
 import { fetchClientesMapData, type ClienteMapData } from '../lib/mapa'
+import BuiltBy from '../components/BuiltBy'
 
 const ClientesMapa = lazy(() => import('../components/ClientesMapa'))
 
@@ -480,11 +481,14 @@ export default function Analytics() {
               </div>
             )}
 
-            <span className={`text-xs font-semibold px-3 py-1.5 rounded-full flex-shrink-0 ${
-              hasFilter ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
-            }`}>
-              {hasFilter ? 'Filtro activo' : `${kpiPedidos} pedidos`}
-            </span>
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <BuiltBy />
+              <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
+                hasFilter ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
+              }`}>
+                {hasFilter ? 'Filtro activo' : `${kpiPedidos} pedidos`}
+              </span>
+            </div>
           </div>
 
           {/* Filter bar: grid 2 col en móvil, inline en desktop */}

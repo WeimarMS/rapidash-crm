@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import LogoCapsula from './LogoCapsula'
 import type { Rol } from '../lib/auth'
 import { canAccess } from '../lib/permissions'
 
@@ -116,12 +117,7 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
       >
         {/* Brand */}
         <div className={`mb-5 flex items-center gap-2.5 ${expanded ? 'px-4' : 'justify-center'}`}>
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-            style={{ background: '#15803d' }}
-          >
-            RD
-          </div>
+          <span className="flex-shrink-0"><LogoCapsula size={38} /></span>
           {expanded && (
             <span className="text-white font-extrabold tracking-tight whitespace-nowrap">RapiDash CRM</span>
           )}
@@ -196,13 +192,8 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
           </svg>
         </button>
 
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs"
-            style={{ background: '#15803d' }}
-          >
-            RD
-          </div>
+        <div className="flex items-center gap-2">
+          <LogoCapsula size={32} />
           <span className="text-white font-extrabold text-sm tracking-tight">RapiDash</span>
         </div>
 
@@ -224,12 +215,7 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
             {/* Drawer header */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-                  style={{ background: '#15803d' }}
-                >
-                  RD
-                </div>
+                <LogoCapsula size={36} />
                 <span className="text-white font-extrabold tracking-tight">RapiDash CRM</span>
               </div>
               <button

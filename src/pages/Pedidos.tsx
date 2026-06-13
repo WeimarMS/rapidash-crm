@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { fetchPedidos, fetchPedidoItems, updatePedidoEstado, fetchPedidoFormOptions, createPedido, type Pedido, type EstadoPedido, type PedidoItem, type PedidoFormOptions } from '../lib/pedidos'
 import { useAuth } from '../contexts/AuthContext'
 import { isReadOnly } from '../lib/permissions'
+import BuiltBy from '../components/BuiltBy'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -554,18 +555,21 @@ export default function Pedidos() {
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Pedidos</h1>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
         </div>
-        {!readOnly && (
-          <button
-            onClick={() => setShowNuevo(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: '#1e40af' }}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-            Nuevo pedido
-          </button>
-        )}
+        <div className="flex items-center gap-4">
+          <BuiltBy />
+          {!readOnly && (
+            <button
+              onClick={() => setShowNuevo(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: '#1e40af' }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              Nuevo pedido
+            </button>
+          )}
+        </div>
       </header>
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-5 max-w-7xl w-full mx-auto">
