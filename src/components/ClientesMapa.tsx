@@ -128,7 +128,13 @@ export default function ClientesMapa({ clients }: Props) {
   return (
     <div>
       {/* Leaflet map */}
-      <div style={{ height: 470, borderRadius: '0.875rem', overflow: 'hidden', position: 'relative' }}>
+      {/* isolation + zIndex confinan los z-index internos de Leaflet (panes 400-700,
+          controles 800-1000) a este contexto de apilamiento, para que no floten
+          sobre el sidebar (z-20) ni el drawer movil (z-50). */}
+      <div style={{
+        height: 470, borderRadius: '0.875rem', overflow: 'hidden',
+        position: 'relative', zIndex: 0, isolation: 'isolate',
+      }}>
         <MapContainer
           center={[-17.7833, -63.1821]}
           zoom={11}
