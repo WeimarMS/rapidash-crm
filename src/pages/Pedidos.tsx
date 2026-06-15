@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchPedidos, fetchPedidoItems, updatePedidoEstado, fetchPedidoFormOptions, createPedido, type Pedido, type EstadoPedido, type PedidoItem, type PedidoFormOptions } from '../lib/pedidos'
+import { fetchProductos, type Producto } from '../lib/productos'
 import { useAuth } from '../contexts/AuthContext'
+import { useT } from '../contexts/LanguageContext'
 import { isReadOnly } from '../lib/permissions'
 import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const ESTADO_CFG: Record<EstadoPedido, { label: string; bg: string; text: string; dot: string }> = {
-  pendiente:  { label: 'Pendiente',  bg: 'bg-slate-100',   text: 'text-slate-500',   dot: '#94a3b8' },
-  confirmado: { label: 'Confirmado', bg: 'bg-amber-50',    text: 'text-amber-700',   dot: '#d97706' },
-  en_ruta:    { label: 'En ruta',    bg: 'bg-blue-50',     text: 'text-blue-700',    dot: '#2563eb' },
-  entregado:  { label: 'Entregado',  bg: 'bg-emerald-50',  text: 'text-emerald-700', dot: '#16a34a' },
-  fallido:    { label: 'Fallido',    bg: 'bg-rose-50',     text: 'text-rose-700',    dot: '#dc2626' },
-  cancelado:  { label: 'Cancelado',  bg: 'bg-slate-100',   text: 'text-slate-500',   dot: '#94a3b8' },
+const ESTADO_CFG: Record<EstadoPedido, { bg: string; text: string; dot: string }> = {
+  pendiente:  { bg: 'bg-slate-100',   text: 'text-slate-500',   dot: '#94a3b8' },
+  confirmado: { bg: 'bg-amber-50',    text: 'text-amber-700',   dot: '#d97706' },
+  en_ruta:    { bg: 'bg-blue-50',     text: 'text-blue-700',    dot: '#2563eb' },
+  entregado:  { bg: 'bg-emerald-50',  text: 'text-emerald-700', dot: '#16a34a' },
+  fallido:    { bg: 'bg-rose-50',     text: 'text-rose-700',    dot: '#dc2626' },
+  cancelado:  { bg: 'bg-slate-100',   text: 'text-slate-500',   dot: '#94a3b8' },
 }
 
 const ESTADOS: EstadoPedido[] = ['pendiente', 'confirmado', 'en_ruta', 'entregado', 'fallido', 'cancelado']
@@ -33,11 +35,12 @@ const fmtFechaLarga = (iso: string | null) => {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function EstadoBadge({ estado }: { estado: EstadoPedido }) {
+  const { t } = useT()
   const cfg = ESTADO_CFG[estado] ?? ESTADO_CFG.pendiente
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
-      {cfg.label}
+      {t('estado.' + estado)}
     </span>
   )
 }
@@ -74,6 +77,7 @@ function CambiarEstadoModal({ pedido, onClose, onSuccess }: {
   onClose: () => void
   onSuccess: (newEstado: EstadoPedido) => void
 }) {
+  const { t } = useT()
   const [nuevoEstado, setNuevoEstado] = useState<EstadoPedido>(pedido.estado)
   const [saving, setSaving]           = useState(false)
   const [err, setErr]                 = useState<string | null>(null)
@@ -100,19 +104,19 @@ function CambiarEstadoModal({ pedido, onClose, onSuccess }: {
         style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}
       >
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Cambiar estado</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">{t('pedidos.changeState')}</p>
           <p className="font-data text-base font-bold text-blue-700">{pedido.codigo}</p>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Nuevo estado</label>
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('pedidos.newState')}</label>
           <select
             value={nuevoEstado}
             onChange={e => setNuevoEstado(e.target.value as EstadoPedido)}
             className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
           >
             {ESTADOS.map(e => (
-              <option key={e} value={e}>{ESTADO_CFG[e].label}</option>
+              <option key={e} value={e}>{t('estado.' + e)}</option>
             ))}
           </select>
         </div>
@@ -126,7 +130,7 @@ function CambiarEstadoModal({ pedido, onClose, onSuccess }: {
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
           >
-            Cancelar
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleConfirmar}
@@ -140,7 +144,7 @@ function CambiarEstadoModal({ pedido, onClose, onSuccess }: {
                 <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
               </svg>
             )}
-            {saving ? 'Guardando…' : 'Confirmar'}
+            {saving ? t('common.saving') : t('pedidos.confirm')}
           </button>
         </div>
       </div>
@@ -158,6 +162,7 @@ function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
   const [items, setItems]               = useState<PedidoItem[]>([])
   const [loadingItems, setLoadingItems] = useState(true)
   const [showEstadoModal, setShowEstadoModal] = useState(false)
+  const { t, tZona } = useT()
   const { profile } = useAuth()
   const readOnly = isReadOnly(profile?.rol)
 
@@ -179,7 +184,7 @@ function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
         {/* Header */}
         <div className="px-6 pt-6 pb-5 border-b border-slate-100 flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Detalle del pedido</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">{t('pedidos.detail')}</p>
             <p className="font-data text-lg font-bold text-blue-700">{pedido.codigo}</p>
             <div className="flex items-center gap-2 mt-2">
               <EstadoBadge estado={pedido.estado} />
@@ -188,7 +193,7 @@ function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
                 style={{ color: pedido.zona_color }}
               >
                 <span className="w-2 h-2 rounded-full" style={{ background: pedido.zona_color }} />
-                {pedido.zona_nombre}
+                {tZona(pedido.zona_nombre)}
               </span>
             </div>
           </div>
@@ -204,22 +209,22 @@ function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
 
         {/* Summary strip */}
         <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
-          <SummaryCell label="Total" value={fmtBs(pedido.total)} accent />
-          <SummaryCell label="Pedido" value={fmtFecha(pedido.fecha_pedido)} />
-          <SummaryCell label="Entrega estimada" value={fmtFecha(pedido.fecha_entrega_estimada)} />
+          <SummaryCell label={t('common.total')} value={fmtBs(pedido.total)} accent />
+          <SummaryCell label={t('pedidos.order')} value={fmtFecha(pedido.fecha_pedido)} />
+          <SummaryCell label={t('pedidos.estimatedDelivery')} value={fmtFecha(pedido.fecha_entrega_estimada)} />
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {/* Cliente */}
           <div className="px-6 py-4 border-b border-slate-100">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Cliente</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('common.client')}</p>
             <p className="font-semibold text-slate-800">{pedido.cliente_nombre}</p>
           </div>
 
           {/* Items */}
           <div className="px-6 py-4">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-              Productos ({loadingItems ? '…' : items.length})
+              {t('pedidos.products').replace('{n}', loadingItems ? '…' : String(items.length))}
             </p>
 
             {loadingItems ? (
@@ -227,16 +232,16 @@ function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
                 {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
               </div>
             ) : items.length === 0 ? (
-              <p className="text-sm text-slate-400">Sin items registrados</p>
+              <p className="text-sm text-slate-400">{t('pedidos.noItems')}</p>
             ) : (
               <div className="rounded-xl border border-slate-100 overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-100">
-                      <th className="px-4 py-2.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Producto</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Cant.</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">P. Unit.</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Subtotal</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('pedidos.colProduct')}</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">{t('pedidos.colQty')}</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">{t('pedidos.colUnitPrice')}</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">{t('pedidos.colSubtotal')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -255,7 +260,7 @@ function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
                   </tbody>
                   <tfoot>
                     <tr className="bg-slate-50 border-t border-slate-200">
-                      <td colSpan={3} className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total</td>
+                      <td colSpan={3} className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">{t('common.total')}</td>
                       <td className="px-4 py-3 text-sm font-extrabold text-slate-900 text-right">{fmtBs(pedido.total)}</td>
                     </tr>
                   </tfoot>
@@ -269,13 +274,13 @@ function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
             <div className="px-6 py-4 border-t border-slate-100 space-y-3">
               {pedido.fecha_entrega_real && (
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Entregado el</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('pedidos.deliveredOn')}</p>
                   <p className="text-sm font-semibold text-emerald-700">{fmtFechaLarga(pedido.fecha_entrega_real)}</p>
                 </div>
               )}
               {pedido.notas && (
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Notas</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('pedidos.notes')}</p>
                   <p className="text-sm text-slate-600 leading-relaxed">{pedido.notas}</p>
                 </div>
               )}
@@ -287,14 +292,14 @@ function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
         {!readOnly && (
           <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
             <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
-              Editar pedido
+              {t('pedidos.editOrder')}
             </button>
             <button
               onClick={() => setShowEstadoModal(true)}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
               style={{ background: cfg.dot }}
             >
-              Cambiar estado
+              {t('pedidos.changeState')}
             </button>
           </div>
         )}
@@ -338,21 +343,54 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
   onClose: () => void
   onSuccess: (p: Pedido) => void
 }) {
+  const { t, tZona } = useT()
   const [opts, setOpts]       = useState<PedidoFormOptions | null>(null)
   const [optsErr, setOptsErr] = useState<string | null>(null)
+  const [productos, setProductos] = useState<Producto[]>([])
   const [form, setForm]       = useState({
     cliente_id: '', repartidor_id: '', zona_id: '',
     fecha_entrega_estimada: '', notas: '',
   })
+  // Líneas del pedido. `key` es un id local solo para React.
+  const [lineas, setLineas] = useState<{ key: number; producto_id: string; cantidad: number; precio_unitario: number }[]>([
+    { key: 0, producto_id: '', cantidad: 1, precio_unitario: 0 },
+  ])
   const [saving, setSaving] = useState(false)
   const [err, setErr]       = useState<string | null>(null)
 
   useEffect(() => {
     fetchPedidoFormOptions().then(setOpts).catch(e => setOptsErr(e.message))
+    fetchProductos().then(setProductos).catch(e => setOptsErr(e.message))
   }, [])
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(prev => ({ ...prev, [k]: e.target.value }))
+
+  // ─── Líneas del pedido ──────────────────────────────────────────────
+  const addLinea = () =>
+    setLineas(prev => [...prev, { key: (prev.at(-1)?.key ?? -1) + 1, producto_id: '', cantidad: 1, precio_unitario: 0 }])
+
+  const removeLinea = (key: number) =>
+    setLineas(prev => (prev.length > 1 ? prev.filter(l => l.key !== key) : prev))
+
+  const onProductoChange = (key: number, productoId: string) => {
+    const prod = productos.find(p => p.id === productoId)
+    setLineas(prev => prev.map(l =>
+      l.key === key
+        ? { ...l, producto_id: productoId, precio_unitario: prod?.precio_unitario ?? 0 }
+        : l,
+    ))
+  }
+
+  const onCantidadChange = (key: number, value: string) => {
+    const n = parseInt(value, 10)
+    setLineas(prev => prev.map(l =>
+      l.key === key ? { ...l, cantidad: Number.isNaN(n) || n < 1 ? 1 : n } : l,
+    ))
+  }
+
+  const lineasValidas = lineas.filter(l => l.producto_id && l.cantidad >= 1)
+  const total = lineasValidas.reduce((s, l) => s + l.cantidad * l.precio_unitario, 0)
 
   // Al elegir cliente: autocompletar su zona y resetear repartidor
   const handleClienteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -367,13 +405,17 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
     : []
 
   const handleSubmit = async () => {
-    if (!form.cliente_id || !form.zona_id) { setErr('Cliente y zona son obligatorios'); return }
+    if (!form.cliente_id || !form.zona_id) { setErr(t('pedidos.errClientZone')); return }
+    if (lineasValidas.length === 0) { setErr(t('pedidos.errNoProduct')); return }
     setErr(null); setSaving(true)
     try {
       const pedido = await createPedido({
         cliente_id: form.cliente_id, repartidor_id: form.repartidor_id || null,
         zona_id: form.zona_id, fecha_entrega_estimada: form.fecha_entrega_estimada,
         notas: form.notas,
+        items: lineasValidas.map(l => ({
+          producto_id: l.producto_id, cantidad: l.cantidad, precio_unitario: l.precio_unitario,
+        })),
       })
       onSuccess(pedido)
     } catch (e: any) { setErr(e.message) }
@@ -387,8 +429,8 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
         style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
         <div className="flex items-start justify-between mb-5">
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Pedidos</p>
-            <h2 className="text-lg font-extrabold text-slate-900">Nuevo pedido</h2>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">{t('pedidos.title')}</p>
+            <h2 className="text-lg font-extrabold text-slate-900">{t('pedidos.new')}</h2>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -398,65 +440,135 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
         <div className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className={LBL}>Cliente *</label>
+              <label className={LBL}>{t('pedidos.clientReq')}</label>
               <select value={form.cliente_id} onChange={handleClienteChange} className={INP}>
-                <option value="">— Seleccionar —</option>
+                <option value="">{t('common.select')}</option>
                 {opts?.clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
               </select>
             </div>
             <div>
               <label className={LBL}>
-                Zona *
-                <span className="font-normal text-slate-400"> · se asigna del cliente</span>
+                {t('pedidos.zoneReq')}
+                <span className="font-normal text-slate-400">{t('pedidos.zoneHint')}</span>
               </label>
               <select
                 value={form.zona_id}
                 disabled
                 className={`${INP} disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed`}
               >
-                <option value="">{form.cliente_id ? '—' : '— Elegí un cliente —'}</option>
-                {opts?.zonas.map(z => <option key={z.id} value={z.id}>{z.nombre}</option>)}
+                <option value="">{form.cliente_id ? '—' : t('pedidos.pickClient')}</option>
+                {opts?.zonas.map(z => <option key={z.id} value={z.id}>{tZona(z.nombre)}</option>)}
               </select>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={LBL}>
-                Repartidor
+                {t('pedidos.courier')}
                 {form.zona_id && (
-                  <span className="font-normal text-slate-400"> · de la zona</span>
+                  <span className="font-normal text-slate-400">{t('pedidos.courierHint')}</span>
                 )}
               </label>
               <select value={form.repartidor_id} onChange={set('repartidor_id')} className={INP}>
-                <option value="">— Sin asignar —</option>
+                <option value="">{t('pedidos.unassigned')}</option>
                 {repartidoresZona.map(r => <option key={r.id} value={r.id}>{r.nombre} {r.apellido}</option>)}
               </select>
               {form.zona_id && repartidoresZona.length === 0 && (
-                <p className="mt-1 text-[11px] text-amber-600">Sin repartidores activos en esta zona</p>
+                <p className="mt-1 text-[11px] text-amber-600">{t('pedidos.noCouriers')}</p>
               )}
             </div>
             <div>
-              <label className={LBL}>Fecha entrega estimada</label>
+              <label className={LBL}>{t('pedidos.estimatedDateLbl')}</label>
               <input type="date" value={form.fecha_entrega_estimada} onChange={set('fecha_entrega_estimada')} className={INP} />
             </div>
           </div>
           <div>
-            <label className={LBL}>Observaciones</label>
+            <label className={LBL}>{t('pedidos.observations')}</label>
             <textarea value={form.notas} onChange={set('notas')} rows={2}
-              placeholder="Instrucciones especiales, referencias de entrega…"
+              placeholder={t('pedidos.observationsPh')}
               className={`${INP} resize-none`} />
+          </div>
+
+          {/* Productos del pedido */}
+          <div className="pt-1">
+            <div className="flex items-center justify-between mb-2">
+              <label className={`${LBL} mb-0`}>{t('pedidos.orderProductsReq')}</label>
+              <button
+                type="button"
+                onClick={addLinea}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-3.5 h-3.5"><path d="M12 5v14M5 12h14"/></svg>
+                {t('pedidos.addProduct')}
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {lineas.map(linea => {
+                const subtotal = linea.cantidad * linea.precio_unitario
+                return (
+                  <div key={linea.key} className="flex items-end gap-2 rounded-xl border border-slate-100 bg-slate-50/60 p-2.5">
+                    <div className="flex-1 min-w-0">
+                      <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('pedidos.colProduct')}</label>
+                      <select
+                        value={linea.producto_id}
+                        onChange={e => onProductoChange(linea.key, e.target.value)}
+                        className={`${INP} bg-white`}
+                      >
+                        <option value="">{t('common.select')}</option>
+                        {productos.map(p => (
+                          <option key={p.id} value={p.id}>{p.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="w-16 flex-shrink-0">
+                      <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('pedidos.colQty')}</label>
+                      <input
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={linea.cantidad}
+                        onChange={e => onCantidadChange(linea.key, e.target.value)}
+                        className={`${INP} bg-white text-right`}
+                      />
+                    </div>
+                    <div className="w-24 flex-shrink-0 text-right">
+                      <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('pedidos.colSubtotal')}</label>
+                      <p className="px-1 py-2 text-sm font-semibold text-slate-800 whitespace-nowrap">
+                        {new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2 }).format(subtotal)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeLinea(linea.key)}
+                      disabled={lineas.length === 1}
+                      title={t('pedidos.removeProduct')}
+                      className="w-9 h-9 mb-0.5 flex-shrink-0 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400 disabled:cursor-not-allowed"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Total */}
+            <div className="mt-3 flex items-center justify-between rounded-xl bg-blue-50 border border-blue-100 px-4 py-2.5">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('common.total')}</span>
+              <span className="text-base font-extrabold text-blue-800">{fmtBs(total)}</span>
+            </div>
           </div>
         </div>
         {err && <p className="mt-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{err}</p>}
         <div className="flex gap-3 mt-5">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
-            Cancelar
+            {t('common.cancel')}
           </button>
-          <button onClick={handleSubmit} disabled={saving || !opts}
+          <button onClick={handleSubmit} disabled={saving || !opts || lineasValidas.length === 0}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
             style={{ background: '#1e40af' }}>
             {saving && <Spinner />}
-            {saving ? 'Guardando…' : 'Crear pedido'}
+            {saving ? t('common.saving') : t('pedidos.createOrder')}
           </button>
         </div>
       </div>
@@ -476,6 +588,7 @@ export default function Pedidos() {
   const [selected, setSelected]     = useState<Pedido | null>(null)
   const [toast, setToast]           = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const [showNuevo, setShowNuevo]   = useState(false)
+  const { t, tZona } = useT()
   const { profile } = useAuth()
   const readOnly = isReadOnly(profile?.rol)
 
@@ -486,7 +599,7 @@ export default function Pedidos() {
 
   const handleNuevoPedido = (p: Pedido) => {
     setPedidos(prev => [p, ...prev])
-    showToast('success', `Pedido ${p.codigo} creado correctamente`)
+    showToast('success', t('pedidos.toastCreated').replace('{code}', p.codigo))
     setShowNuevo(false)
   }
 
@@ -501,7 +614,7 @@ export default function Pedidos() {
     const updated = { ...selected, estado: newEstado }
     setPedidos(prev => prev.map(p => p.id === selected.id ? updated : p))
     setSelected(updated)
-    showToast('success', `Estado cambiado a "${ESTADO_CFG[newEstado].label}"`)
+    showToast('success', t('pedidos.toastStateChanged').replace('{state}', t('estado.' + newEstado)))
   }
 
   const zonas = useMemo(() => {
@@ -552,11 +665,11 @@ export default function Pedidos() {
       {/* Header */}
       <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Pedidos</h1>
+          <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>{t('pedidos.title')}</h1>
           <p className="hidden md:block text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
           <BuiltByMobile />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 lg:mr-24">
           <BuiltBy />
           {!readOnly && (
             <button
@@ -567,7 +680,7 @@ export default function Pedidos() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
                 <path d="M12 5v14M5 12h14"/>
               </svg>
-              Nuevo pedido
+              {t('pedidos.new')}
             </button>
           )}
         </div>
@@ -587,11 +700,11 @@ export default function Pedidos() {
             Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16" />)
           ) : (
             <>
-              <StatCard label="Total pedidos"  value={stats.total}                color="#1e40af" />
-              <StatCard label="Entregados"      value={stats.entregados}           color="#15803d" />
-              <StatCard label="Fallidos"        value={stats.fallidos}             color="#dc2626" />
-              <StatCard label="Tasa entrega"    value={`${stats.tasa}%`}           color="#0891b2" />
-              <StatCard label="Ingresos totales" value={fmtBs(stats.ingresos)}    color="#15803d" wide />
+              <StatCard label={t('pedidos.statTotal')}    value={stats.total}            color="#1e40af" />
+              <StatCard label={t('pedidos.statDelivered')} value={stats.entregados}      color="#15803d" />
+              <StatCard label={t('pedidos.statFailed')}   value={stats.fallidos}         color="#dc2626" />
+              <StatCard label={t('pedidos.statRate')}     value={`${stats.tasa}%`}       color="#0891b2" />
+              <StatCard label={t('pedidos.statRevenue')}  value={fmtBs(stats.ingresos)}  color="#15803d" wide />
             </>
           )}
         </div>
@@ -607,7 +720,7 @@ export default function Pedidos() {
               </svg>
               <input
                 type="text"
-                placeholder="Código o cliente..."
+                placeholder={t('pedidos.searchPh')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
@@ -617,7 +730,7 @@ export default function Pedidos() {
             {/* Estado pills */}
             <div className="flex flex-wrap gap-1.5">
               <FilterPill active={estadoFilter === 'todos'} onClick={() => setEstadoFilter('todos')}>
-                Todos los estados
+                {t('common.allStates')}
               </FilterPill>
               {estadosEnDatos.map(e => (
                 <FilterPill
@@ -626,7 +739,7 @@ export default function Pedidos() {
                   onClick={() => setEstadoFilter(e)}
                   color={ESTADO_CFG[e].dot}
                 >
-                  {ESTADO_CFG[e].label}
+                  {t('estado.' + e)}
                 </FilterPill>
               ))}
             </div>
@@ -635,7 +748,7 @@ export default function Pedidos() {
           {/* Zona pills */}
           <div className="flex flex-wrap gap-1.5">
             <FilterPill active={zonaFilter === 'todas'} onClick={() => setZonaFilter('todas')}>
-              Todas las zonas
+              {t('common.allZones')}
             </FilterPill>
             {zonas.map(z => (
               <FilterPill
@@ -644,7 +757,7 @@ export default function Pedidos() {
                 onClick={() => setZonaFilter(z.id)}
                 color={z.color}
               >
-                {z.nombre}
+                {tZona(z.nombre)}
               </FilterPill>
             ))}
           </div>
@@ -654,9 +767,11 @@ export default function Pedidos() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between">
             <p className="text-xs font-semibold text-slate-500">
-              {loading ? '…' : `${filtered.length} pedido${filtered.length !== 1 ? 's' : ''}`}
+              {loading
+                ? '…'
+                : (filtered.length === 1 ? t('pedidos.countOne') : t('pedidos.countMany')).replace('{n}', String(filtered.length))}
               {!loading && filtered.length !== pedidos.length && (
-                <span className="ml-1 text-slate-400">de {pedidos.length} total</span>
+                <span className="ml-1 text-slate-400">{t('common.of')} {pedidos.length} {t('common.totalSuffix')}</span>
               )}
             </p>
             {(estadoFilter !== 'todos' || zonaFilter !== 'todas' || search) && (
@@ -664,7 +779,7 @@ export default function Pedidos() {
                 className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
                 onClick={() => { setEstadoFilter('todos'); setZonaFilter('todas'); setSearch('') }}
               >
-                Limpiar filtros
+                {t('common.clearFilters')}
               </button>
             )}
           </div>
@@ -673,9 +788,9 @@ export default function Pedidos() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  {['Código', 'Cliente', 'Zona', 'Estado', 'Total', 'Fecha', ''].map(h => (
+                  {['common.code', 'common.client', 'common.zone', 'common.state', 'common.total', 'common.date', ''].map(h => (
                     <th key={h} className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                      {h}
+                      {h ? t(h) : ''}
                     </th>
                   ))}
                 </tr>
@@ -694,8 +809,8 @@ export default function Pedidos() {
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-16 text-center">
-                      <p className="text-slate-400 text-sm">No se encontraron pedidos</p>
-                      <p className="text-slate-300 text-xs mt-1">Intenta con otros filtros</p>
+                      <p className="text-slate-400 text-sm">{t('pedidos.noneFound')}</p>
+                      <p className="text-slate-300 text-xs mt-1">{t('common.tryOtherFilters')}</p>
                     </td>
                   </tr>
                 ) : (
@@ -717,7 +832,7 @@ export default function Pedidos() {
                       <td className="px-6 py-3.5">
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: p.zona_color }}>
                           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.zona_color }} />
-                          {p.zona_nombre}
+                          {tZona(p.zona_nombre)}
                         </span>
                       </td>
                       <td className="px-6 py-3.5">
@@ -734,7 +849,7 @@ export default function Pedidos() {
                           className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-blue-50 whitespace-nowrap"
                           onClick={e => { e.stopPropagation(); setSelected(p) }}
                         >
-                          Ver →
+                          {t('common.view')}
                         </button>
                       </td>
                     </tr>
@@ -752,8 +867,8 @@ export default function Pedidos() {
               </div>
             ) : filtered.length === 0 ? (
               <div className="px-6 py-16 text-center">
-                <p className="text-slate-400 text-sm">No se encontraron pedidos</p>
-                <p className="text-slate-300 text-xs mt-1">Intenta con otros filtros</p>
+                <p className="text-slate-400 text-sm">{t('pedidos.noneFound')}</p>
+                <p className="text-slate-300 text-xs mt-1">{t('common.tryOtherFilters')}</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -773,7 +888,7 @@ export default function Pedidos() {
                     <div className="flex items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: p.zona_color }}>
                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.zona_color }} />
-                        {p.zona_nombre}
+                        {tZona(p.zona_nombre)}
                       </span>
                       <span className="text-xs text-slate-400">{fmtFecha(p.fecha_pedido)}</span>
                     </div>

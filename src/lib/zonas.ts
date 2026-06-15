@@ -63,3 +63,41 @@ export async function fetchZonas(): Promise<ZonaDetalle[]> {
     repartidores_activos: repMap.get(z.id)        ?? 0,
   }))
 }
+
+// ─── Form helpers ─────────────────────────────────────────────────────────────
+
+export interface NewZonaInput {
+  nombre:      string
+  color:       string
+  descripcion: string
+}
+
+export async function createZona(input: NewZonaInput): Promise<ZonaDetalle> {
+  const { data, error } = await supabase
+    .from('zonas')
+    .insert({
+      nombre:      input.nombre,
+      color:       input.color,
+      descripcion: input.descripcion || null,
+      activa:      true,
+    })
+    .select('id, nombre, color, descripcion, activa')
+    .single()
+
+  if (error) throw new Error(error.message)
+
+  const z = data as any
+  return {
+    id:                   z.id,
+    nombre:               z.nombre,
+    color:                z.color,
+    descripcion:          z.descripcion,
+    activa:               z.activa ?? true,
+    supervisor_nombre:    null,
+    total_clientes:       0,
+    total_pedidos:        0,
+    pedidos_entregados:   0,
+    ingresos_total:       0,
+    repartidores_activos: 0,
+  }
+}

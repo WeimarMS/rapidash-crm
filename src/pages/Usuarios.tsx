@@ -4,6 +4,7 @@ import type { FullUser, Rol, NewUserInput } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
+import { useT } from '../contexts/LanguageContext'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -36,6 +37,7 @@ function Skeleton({ className = '' }: { className?: string }) {
 // ─── Piezas de modal compartidas ──────────────────────────────────────────────
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  const { t } = useT()
   return (
     <>
       <div className="fixed inset-0 bg-slate-900/50 z-40 backdrop-blur-[2px]" onClick={onClose} />
@@ -43,7 +45,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
         style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
         <div className="flex items-start justify-between mb-5">
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Usuarios</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">{t('usuarios.modal.eyebrow')}</p>
             <h2 className="text-lg font-extrabold text-slate-900">{title}</h2>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
@@ -59,10 +61,11 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 function ModalFooter({ onClose, onSubmit, saving, label, savingLabel }: {
   onClose: () => void; onSubmit: () => void; saving: boolean; label: string; savingLabel: string
 }) {
+  const { t } = useT()
   return (
     <div className="flex gap-3 mt-5">
       <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
-        Cancelar
+        {t('common.cancel')}
       </button>
       <button onClick={onSubmit} disabled={saving}
         className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
@@ -79,26 +82,27 @@ function RolZonaFields({ rol, zonaId, zonas, onRol, onZona }: {
   rol: Rol; zonaId: string | null; zonas: Zona[]
   onRol: (r: Rol) => void; onZona: (z: string | null) => void
 }) {
+  const { t, tZona } = useT()
   const needsZona = ROL_NEEDS_ZONA.includes(rol)
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div>
-        <label className={LBL}>Rol *</label>
+        <label className={LBL}>{t('usuarios.label.rol')}</label>
         <select value={rol} onChange={e => onRol(e.target.value as Rol)} className={INP}>
-          {ROLES.map(r => <option key={r} value={r}>{ROL_CFG[r].label}</option>)}
+          {ROLES.map(r => <option key={r} value={r}>{t('role.' + r)}</option>)}
         </select>
       </div>
       {needsZona ? (
         <div>
-          <label className={LBL}>Zona *</label>
+          <label className={LBL}>{t('usuarios.label.zona')}</label>
           <select value={zonaId ?? ''} onChange={e => onZona(e.target.value || null)} className={INP}>
-            <option value="">— Seleccionar —</option>
-            {zonas.map(z => <option key={z.id} value={z.id}>{z.nombre}</option>)}
+            <option value="">{t('common.select')}</option>
+            {zonas.map(z => <option key={z.id} value={z.id}>{tZona(z.nombre)}</option>)}
           </select>
         </div>
       ) : (
         <div className="flex items-end pb-1">
-          <p className="text-xs text-slate-400 italic">Este rol no requiere zona</p>
+          <p className="text-xs text-slate-400 italic">{t('usuarios.noZona')}</p>
         </div>
       )}
     </div>
@@ -112,6 +116,7 @@ function NuevoUsuarioModal({ zonas, onClose, onSuccess }: {
   onClose: () => void
   onSuccess: (u: FullUser) => void
 }) {
+  const { t } = useT()
   const [form, setForm]     = useState<NewUserInput>({
     usuario: '', nombre: '', apellido: '', password: '', rol: 'repartidor', zona_id: null,
   })
@@ -126,13 +131,13 @@ function NuevoUsuarioModal({ zonas, onClose, onSuccess }: {
 
   const handleSubmit = async () => {
     if (!form.usuario || !form.nombre || !form.apellido || !form.password) {
-      setErr('Todos los campos marcados con * son obligatorios'); return
+      setErr(t('usuarios.err.required')); return
     }
     if (form.password.length < 8) {
-      setErr('La contraseña debe tener al menos 8 caracteres'); return
+      setErr(t('usuarios.err.passwordLen')); return
     }
     if (needsZona && !form.zona_id) {
-      setErr('Selecciona una zona para este rol'); return
+      setErr(t('usuarios.err.zonaRequired')); return
     }
     setErr(null); setSaving(true)
     try {
@@ -143,26 +148,26 @@ function NuevoUsuarioModal({ zonas, onClose, onSuccess }: {
   }
 
   return (
-    <Modal title="Nuevo usuario" onClose={onClose}>
+    <Modal title={t('usuarios.modal.new.title')} onClose={onClose}>
       <form className="space-y-3" autoComplete="off" onSubmit={e => e.preventDefault()}>
         <div>
-          <label className={LBL}>Usuario *</label>
+          <label className={LBL}>{t('usuarios.label.usuario')}</label>
           <input type="text" value={form.usuario} onChange={setText('usuario')}
             placeholder="ej. ejemplo@tumail.com" className={INP}
             onKeyDown={e => { if (e.key === ' ') e.preventDefault() }} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className={LBL}>Nombre *</label>
+            <label className={LBL}>{t('usuarios.label.nombre')}</label>
             <input type="text" value={form.nombre} onChange={setText('nombre')} placeholder="Carlos" className={INP} />
           </div>
           <div>
-            <label className={LBL}>Apellido *</label>
+            <label className={LBL}>{t('usuarios.label.apellido')}</label>
             <input type="text" value={form.apellido} onChange={setText('apellido')} placeholder="Mendoza" className={INP} />
           </div>
         </div>
         <div>
-          <label className={LBL}>Contraseña * <span className="text-slate-400 font-normal">(mín. 8 caracteres)</span></label>
+          <label className={LBL}>{t('usuarios.label.password')} <span className="text-slate-400 font-normal">{t('usuarios.label.passwordHint')}</span></label>
           <div className="relative">
             <input type={showPwd ? 'text' : 'password'} value={form.password} onChange={setText('password')}
               autoComplete="new-password" placeholder="••••••••" className={`${INP} pr-10`} />
@@ -186,7 +191,7 @@ function NuevoUsuarioModal({ zonas, onClose, onSuccess }: {
 
       {err && <p className="mt-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{err}</p>}
 
-      <ModalFooter onClose={onClose} onSubmit={handleSubmit} saving={saving} label="Crear usuario" savingLabel="Creando…" />
+      <ModalFooter onClose={onClose} onSubmit={handleSubmit} saving={saving} label={t('usuarios.btn.create')} savingLabel={t('usuarios.btn.creating')} />
     </Modal>
   )
 }
@@ -198,6 +203,7 @@ function InvitarUsuarioModal({ zonas, onClose, onSuccess }: {
   onClose: () => void
   onSuccess: (u: FullUser) => void
 }) {
+  const { t } = useT()
   const [form, setForm] = useState<{ email: string; nombre: string; apellido: string; rol: Rol; zona_id: string | null }>({
     email: '', nombre: '', apellido: '', rol: 'supervisor_zona', zona_id: null,
   })
@@ -212,10 +218,10 @@ function InvitarUsuarioModal({ zonas, onClose, onSuccess }: {
   const handleSubmit = async () => {
     const email = form.email.trim().toLowerCase()
     if (!email || !email.includes('@') || !form.nombre || !form.apellido) {
-      setErr('Email, nombre y apellido son obligatorios'); return
+      setErr(t('usuarios.err.inviteRequired')); return
     }
     if (needsZona && !form.zona_id) {
-      setErr('Selecciona una zona para este rol'); return
+      setErr(t('usuarios.err.zonaRequired')); return
     }
     setErr(null); setSaving(true)
     try {
@@ -226,23 +232,23 @@ function InvitarUsuarioModal({ zonas, onClose, onSuccess }: {
   }
 
   return (
-    <Modal title="Invitar por email" onClose={onClose}>
+    <Modal title={t('usuarios.modal.invite.title')} onClose={onClose}>
       <p className="text-xs text-slate-500 mb-3 -mt-2">
-        Le llegará un correo para que defina su propia contraseña. Su rol queda asignado desde ahora.
+        {t('usuarios.invite.hint')}
       </p>
       <div className="space-y-3">
         <div>
-          <label className={LBL}>Email *</label>
+          <label className={LBL}>{t('usuarios.label.email')}</label>
           <input type="email" value={form.email} onChange={setText('email')}
             placeholder="persona@empresa.com" className={INP} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className={LBL}>Nombre *</label>
+            <label className={LBL}>{t('usuarios.label.nombre')}</label>
             <input type="text" value={form.nombre} onChange={setText('nombre')} placeholder="Carlos" className={INP} />
           </div>
           <div>
-            <label className={LBL}>Apellido *</label>
+            <label className={LBL}>{t('usuarios.label.apellido')}</label>
             <input type="text" value={form.apellido} onChange={setText('apellido')} placeholder="Mendoza" className={INP} />
           </div>
         </div>
@@ -252,7 +258,7 @@ function InvitarUsuarioModal({ zonas, onClose, onSuccess }: {
 
       {err && <p className="mt-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{err}</p>}
 
-      <ModalFooter onClose={onClose} onSubmit={handleSubmit} saving={saving} label="Enviar invitación" savingLabel="Enviando…" />
+      <ModalFooter onClose={onClose} onSubmit={handleSubmit} saving={saving} label={t('usuarios.btn.invite')} savingLabel={t('usuarios.btn.inviting')} />
     </Modal>
   )
 }
@@ -265,6 +271,7 @@ function CambiarRolModal({ user, zonas, onClose, onSuccess }: {
   onClose: () => void
   onSuccess: (rol: Rol, zonaId: string | null) => void
 }) {
+  const { t } = useT()
   const [rol, setRol]       = useState<Rol>(user.rol)
   const [zonaId, setZonaId] = useState<string | null>(user.zona_id)
   const [saving, setSaving] = useState(false)
@@ -274,7 +281,7 @@ function CambiarRolModal({ user, zonas, onClose, onSuccess }: {
   const sinCambios = rol === user.rol && zonaId === user.zona_id
 
   const handleSubmit = async () => {
-    if (needsZona && !zonaId) { setErr('Selecciona una zona para este rol'); return }
+    if (needsZona && !zonaId) { setErr(t('usuarios.err.zonaRequired')); return }
     setErr(null); setSaving(true)
     try {
       const finalZona = needsZona ? zonaId : null
@@ -285,7 +292,7 @@ function CambiarRolModal({ user, zonas, onClose, onSuccess }: {
   }
 
   return (
-    <Modal title="Cambiar rol" onClose={onClose}>
+    <Modal title={t('usuarios.modal.changeRole.title')} onClose={onClose}>
       <div className="mb-4 px-3 py-2.5 bg-slate-50 rounded-xl">
         <p className="text-sm font-semibold text-slate-800">{user.nombre} {user.apellido}</p>
         <p className="text-xs text-slate-400">{user.email}</p>
@@ -296,13 +303,13 @@ function CambiarRolModal({ user, zonas, onClose, onSuccess }: {
 
       <div className="flex gap-3 mt-5">
         <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
-          Cancelar
+          {t('common.cancel')}
         </button>
         <button onClick={handleSubmit} disabled={saving || sinCambios}
           className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
           style={{ background: '#1e40af' }}>
           {saving && <Spinner />}
-          {saving ? 'Guardando…' : 'Guardar cambios'}
+          {saving ? t('common.saving') : t('common.saveChanges')}
         </button>
       </div>
     </Modal>
@@ -312,6 +319,7 @@ function CambiarRolModal({ user, zonas, onClose, onSuccess }: {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Usuarios() {
+  const { t, tZona } = useT()
   const { user: authUser } = useAuth()
   const [users, setUsers]       = useState<FullUser[]>([])
   const [zonas, setZonas]       = useState<Zona[]>([])
@@ -335,18 +343,21 @@ export default function Usuarios() {
       .catch(e => { setError(e.message); setLoading(false) })
   }, [])
 
-  const zonaNombre = (id: string) => zonas.find(z => z.id === id)?.nombre ?? id.slice(0, 8) + '…'
+  const zonaNombre = (id: string) => {
+    const n = zonas.find(z => z.id === id)?.nombre
+    return n ? tZona(n) : id.slice(0, 8) + '…'
+  }
   const displayName = (u: FullUser) => u.email.endsWith('@rapidash.bo') ? `@${u.usuario}` : u.email
 
   const handleNuevoUsuario = (u: FullUser) => {
     setUsers(prev => [...prev, u].sort((a, b) => a.nombre.localeCompare(b.nombre)))
-    showToast('success', `Usuario ${displayName(u)} creado correctamente`)
+    showToast('success', t('usuarios.toast.created').replace('{name}', displayName(u)))
     setShowNuevo(false)
   }
 
   const handleInvitado = (u: FullUser) => {
     setUsers(prev => [...prev, u].sort((a, b) => a.nombre.localeCompare(b.nombre)))
-    showToast('success', `Invitación enviada a ${u.email}`)
+    showToast('success', t('usuarios.toast.invited').replace('{email}', u.email))
     setShowInvitar(false)
   }
 
@@ -354,7 +365,7 @@ export default function Usuarios() {
     if (!editRol) return
     const u = editRol
     setUsers(prev => prev.map(x => x.id === u.id ? { ...x, rol, zona_id: zonaId } : x))
-    showToast('success', `Rol de ${u.nombre} actualizado a ${ROL_CFG[rol].label}`)
+    showToast('success', t('usuarios.toast.roleUpdated').replace('{name}', u.nombre).replace('{role}', t('role.' + rol)))
     setEditRol(null)
   }
 
@@ -363,7 +374,9 @@ export default function Usuarios() {
     try {
       await toggleUserActivo(u.id, !u.activo)
       setUsers(prev => prev.map(x => x.id === u.id ? { ...x, activo: !u.activo } : x))
-      showToast('success', u.activo ? `${displayName(u)} desactivado` : `${displayName(u)} activado`)
+      showToast('success', u.activo
+        ? t('usuarios.toast.deactivated').replace('{name}', displayName(u))
+        : t('usuarios.toast.activated').replace('{name}', displayName(u)))
     } catch (e: any) {
       showToast('error', e.message)
     } finally {
@@ -379,11 +392,11 @@ export default function Usuarios() {
     <>
       <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Usuarios</h1>
+          <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>{t('usuarios.title')}</h1>
           <p className="hidden md:block text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
           <BuiltByMobile />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 lg:mr-24">
           <BuiltBy />
           <div className="flex items-center gap-2.5">
             <button onClick={() => setShowInvitar(true)}
@@ -391,13 +404,13 @@ export default function Usuarios() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                 <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/>
               </svg>
-              Invitar por email
+              {t('usuarios.invite')}
             </button>
             <button onClick={() => setShowNuevo(true)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
               style={{ background: '#1e40af' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
-              Nuevo usuario
+              {t('usuarios.new')}
             </button>
           </div>
         </div>
@@ -413,10 +426,10 @@ export default function Usuarios() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {loading ? Array.from({length:4}).map((_,i) => <Skeleton key={i} className="h-16" />) : (
             <>
-              <StatCard label="Total usuarios" value={users.length} color="#1e40af" />
-              <StatCard label="Activos" value={activos} color="#15803d" />
-              <StatCard label="Administradores" value={admins} color="#7c3aed" />
-              <StatCard label="Inactivos" value={users.length - activos} color="#64748b" />
+              <StatCard label={t('usuarios.stats.total')} value={users.length} color="#1e40af" />
+              <StatCard label={t('usuarios.stats.activos')} value={activos} color="#15803d" />
+              <StatCard label={t('usuarios.stats.admins')} value={admins} color="#7c3aed" />
+              <StatCard label={t('usuarios.stats.inactivos')} value={users.length - activos} color="#64748b" />
             </>
           )}
         </div>
@@ -425,15 +438,23 @@ export default function Usuarios() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-6 py-3.5 border-b border-slate-100">
             <p className="text-xs font-semibold text-slate-500">
-              {loading ? '…' : `${users.length} usuario${users.length !== 1 ? 's' : ''} del sistema`}
+              {loading ? '…' : (users.length === 1 ? t('usuarios.count') : t('usuarios.count.plural')).replace('{count}', String(users.length))}
             </p>
           </div>
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  {['Usuario', 'Nombre completo', 'Rol', 'Zona', 'Registrado', 'Estado', ''].map(h => (
-                    <th key={h} className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  {[
+                    { key: 'usuario',        label: t('usuarios.th.usuario') },
+                    { key: 'nombreCompleto', label: t('usuarios.th.nombreCompleto') },
+                    { key: 'rol',            label: t('usuarios.th.rol') },
+                    { key: 'zona',           label: t('usuarios.th.zona') },
+                    { key: 'registrado',     label: t('usuarios.th.registrado') },
+                    { key: 'estado',         label: t('usuarios.th.estado') },
+                    { key: 'acciones',       label: '' },
+                  ].map(h => (
+                    <th key={h.key} className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h.label}</th>
                   ))}
                 </tr>
               </thead>
@@ -444,7 +465,7 @@ export default function Usuarios() {
                   </tr>
                 )) : users.length === 0 ? (
                   <tr><td colSpan={7} className="px-5 py-12 text-center text-slate-400 text-sm">
-                    Sin usuarios del sistema. Crea el primero con "+ Nuevo usuario".
+                    {t('usuarios.empty')}
                   </td></tr>
                 ) : users.map(u => {
                   const cfg = ROL_CFG[u.rol]
@@ -462,7 +483,7 @@ export default function Usuarios() {
                       <td className="px-5 py-3.5">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
                           <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
-                          {cfg.label}
+                          {t('role.' + u.rol)}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-slate-500 text-xs">
@@ -472,27 +493,27 @@ export default function Usuarios() {
                       <td className="px-5 py-3.5">
                         {u.invited
                           ? <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />Invitado
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />{t('usuarios.estado.invitado')}
                             </span>
                           : u.activo
                             ? <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Activo
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />{t('usuarios.estado.activo')}
                               </span>
                             : <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />Inactivo
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />{t('usuarios.estado.inactivo')}
                               </span>
                         }
                       </td>
                       <td className="px-5 py-3.5">
                         {isSelf ? (
-                          <span className="text-xs text-slate-300 italic px-3">Tu cuenta</span>
+                          <span className="text-xs text-slate-300 italic px-3">{t('usuarios.self')}</span>
                         ) : (
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => setEditRol(u)}
                               className="text-xs font-semibold px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                             >
-                              Cambiar rol
+                              {t('usuarios.changeRole')}
                             </button>
                             <button
                               onClick={() => handleToggle(u)}
@@ -501,7 +522,7 @@ export default function Usuarios() {
                                 u.activo ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'
                               }`}
                             >
-                              {toggling === u.id ? '…' : u.activo ? 'Desactivar' : 'Activar'}
+                              {toggling === u.id ? '…' : u.activo ? t('common.deactivate') : t('common.activate')}
                             </button>
                           </div>
                         )}
@@ -521,7 +542,7 @@ export default function Usuarios() {
               </div>
             ) : users.length === 0 ? (
               <div className="px-5 py-12 text-center text-slate-400 text-sm">
-                Sin usuarios del sistema. Crea el primero con "+ Nuevo usuario".
+                {t('usuarios.empty')}
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -536,36 +557,36 @@ export default function Usuarios() {
                         <span className="font-mono text-sm font-semibold text-slate-700 truncate">{displayName(u)}</span>
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold flex-shrink-0 ${cfg.bg} ${cfg.text}`}>
                           <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
-                          {cfg.label}
+                          {t('role.' + u.rol)}
                         </span>
                       </div>
                       <p className="font-semibold text-slate-800 text-sm">{u.nombre} {u.apellido}</p>
                       <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
                         <span>{u.zona_id ? zonaNombre(u.zona_id) : '—'}</span>
-                        <span>Registrado: {fmtDate(u.created)}</span>
+                        <span>{t('usuarios.registradoMobile').replace('{date}', fmtDate(u.created))}</span>
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         {u.invited
                           ? <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />Invitado
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />{t('usuarios.estado.invitado')}
                             </span>
                           : u.activo
                             ? <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Activo
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />{t('usuarios.estado.activo')}
                               </span>
                             : <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />Inactivo
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />{t('usuarios.estado.inactivo')}
                               </span>
                         }
                         {isSelf ? (
-                          <span className="text-xs text-slate-300 italic">Tu cuenta</span>
+                          <span className="text-xs text-slate-300 italic">{t('usuarios.self')}</span>
                         ) : (
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => setEditRol(u)}
                               className="text-xs font-semibold px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                             >
-                              Cambiar rol
+                              {t('usuarios.changeRole')}
                             </button>
                             <button
                               onClick={() => handleToggle(u)}
@@ -574,7 +595,7 @@ export default function Usuarios() {
                                 u.activo ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'
                               }`}
                             >
-                              {toggling === u.id ? '…' : u.activo ? 'Desactivar' : 'Activar'}
+                              {toggling === u.id ? '…' : u.activo ? t('common.deactivate') : t('common.activate')}
                             </button>
                           </div>
                         )}

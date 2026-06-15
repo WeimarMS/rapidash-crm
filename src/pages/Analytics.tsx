@@ -19,6 +19,7 @@ import {
 } from '../lib/analytics'
 import { fetchClientesMapData, type ClienteMapData } from '../lib/mapa'
 import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
+import { useT } from '../contexts/LanguageContext'
 
 const ClientesMapa = lazy(() => import('../components/ClientesMapa'))
 
@@ -31,14 +32,6 @@ const fmtPct = (n: number) => `${n}%`
 
 const ESTADOS_FILTRO = ['pendiente','confirmado','en_ruta','entregado','fallido','cancelado']
 const CATEGORIAS     = ['analgesico','antibiotico','vitamina','insumo','vacuna']
-const CAT_LABELS: Record<string,string> = {
-  analgesico:'Analgésico', antibiotico:'Antibiótico',
-  vitamina:'Vitamina', insumo:'Insumo', vacuna:'Vacuna',
-}
-const ESTADO_LABELS: Record<string,string> = {
-  pendiente:'Pendiente', confirmado:'Confirmado', en_ruta:'En ruta',
-  entregado:'Entregado', fallido:'Fallido', cancelado:'Cancelado',
-}
 
 const PROD_COLORS = ['#6366f1','#8b5cf6','#a78bfa','#c4b5fd','#818cf8','#4f46e5','#7c3aed','#9333ea']
 const ZONA_COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6']
@@ -143,12 +136,13 @@ function ChartCard({ title, subtitle, children, loading, height = 240, className
 // ─── EmptyState ───────────────────────────────────────────────────────────────
 
 function EmptyState({ onClear }: { onClear?: () => void }) {
+  const { t } = useT()
   return (
     <div className="flex flex-col items-center justify-center py-12 gap-2">
-      <p className="text-sm text-slate-400">Sin datos para el filtro activo</p>
+      <p className="text-sm text-slate-400">{t('analytics.empty')}</p>
       {onClear && (
         <button onClick={onClear} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline">
-          Limpiar filtros
+          {t('analytics.empty.clear')}
         </button>
       )}
     </div>
@@ -247,6 +241,7 @@ function DateRangeSlider({ months, startIdx, endIdx, onChange }: {
   endIdx: number
   onChange: (start: number, end: number) => void
 }) {
+  const { t } = useT()
   const n = months.length
   if (n < 2) return null
 
@@ -260,7 +255,7 @@ function DateRangeSlider({ months, startIdx, endIdx, onChange }: {
 
   return (
     <div className="flex items-center gap-4 min-w-0">
-      <span className="text-xs font-semibold text-slate-500 whitespace-nowrap hidden sm:block">Período</span>
+      <span className="text-xs font-semibold text-slate-500 whitespace-nowrap hidden sm:block">{t('analytics.period')}</span>
       <div className="flex items-center gap-3 flex-1 min-w-[200px]">
         <span className="text-xs font-bold text-indigo-600 whitespace-nowrap">{fmt(months[startIdx])}</span>
         <div className="relative flex-1 h-5 flex items-center">
@@ -336,6 +331,17 @@ const LineLabel = ({ x, y, value, fill }: any) => {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Analytics() {
+  const { t, tZona } = useT()
+  // computePorEstado (lib) devuelve la etiqueta en español; la mapeamos a la clave
+  // del núcleo para traducirla en la leyenda del donut.
+  const estadoLabel = useCallback((label: string): string => {
+    const keyByEs: Record<string, string> = {
+      'Pendiente': 'pendiente', 'Confirmado': 'confirmado', 'En ruta': 'en_ruta',
+      'Entregado': 'entregado', 'Fallido': 'fallido', 'Cancelado': 'cancelado',
+    }
+    const k = keyByEs[label]
+    return k ? t('estado.' + k) : label
+  }, [t])
   const [raw, setRaw]           = useState<AnalyticsRaw | null>(null)
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState<string | null>(null)
@@ -423,6 +429,7 @@ export default function Analytics() {
   // ── Chart data ─────────────────────────────────────────────────────────────
   const porMesData        = useMemo(() => computePorMes(filtered),                              [filtered])
   const porZonaData       = useMemo(() => computePorZona(filtered, raw?.zonas ?? []),           [filtered, raw])
+  const porZonaDataI18n   = useMemo(() => porZonaData.map(z => ({ ...z, nombre: tZona(z.nombre) })), [porZonaData, tZona])
   const porEstadoData     = useMemo(() => computePorEstado(filtered),                           [filtered])
   const topProdData       = useMemo(() => computeTopProductosByIngresos(filteredItems, null),   [filteredItems])
   const repartidorData    = useMemo(() => computeRepartidorPerf(filtered),                      [filtered])
@@ -451,8 +458,8 @@ export default function Analytics() {
 
   // ── Filter options from data ───────────────────────────────────────────────
   const zonaOptions = useMemo(() =>
-    (raw?.zonas ?? []).map(z => ({ value: z.id, label: z.nombre })),
-    [raw])
+    (raw?.zonas ?? []).map(z => ({ value: z.id, label: tZona(z.nombre) })),
+    [raw, tZona])
 
   const repOptions = useMemo(() =>
     (raw?.repartidores ?? []).map(r => ({ value: r.id, label: r.nombre.split(' ')[0] + ' ' + r.nombre.split(' ')[1] })),
@@ -465,8 +472,8 @@ export default function Analytics() {
         <div className="flex flex-col gap-3 max-w-7xl mx-auto">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
             <div>
-              <h1 className="text-lg font-extrabold tracking-tight text-slate-900">Analytics</h1>
-              <p className="hidden md:block text-xs text-slate-400 mt-0.5">Centro de inteligencia de negocio</p>
+              <h1 className="text-lg font-extrabold tracking-tight text-slate-900">{t('analytics.title')}</h1>
+              <p className="hidden md:block text-xs text-slate-400 mt-0.5">{t('analytics.subtitle')}</p>
               <BuiltByMobile />
             </div>
 
@@ -482,12 +489,12 @@ export default function Analytics() {
               </div>
             )}
 
-            <div className="flex items-center gap-4 flex-shrink-0">
+            <div className="flex items-center gap-4 flex-shrink-0 lg:mr-24">
               <BuiltBy />
               <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
                 hasFilter ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
               }`}>
-                {hasFilter ? 'Filtro activo' : `${kpiPedidos} pedidos`}
+                {hasFilter ? t('analytics.activeFilter') : t('analytics.ordersCount').replace('{count}', String(kpiPedidos))}
               </span>
             </div>
           </div>
@@ -497,46 +504,46 @@ export default function Analytics() {
             <span className="text-slate-400 flex-shrink-0 hidden sm:block"><IconFilter /></span>
             <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:flex-wrap sm:items-center">
               <FilterSelect
-                label="Zona" value={fZona}
+                label={t('analytics.filter.zona')} value={fZona}
                 options={zonaOptions}
                 onChange={setFZona}
               />
               <FilterSelect
-                label="Categoría" value={fCategoria}
-                options={CATEGORIAS.map(c => ({ value: c, label: CAT_LABELS[c] }))}
+                label={t('analytics.filter.categoria')} value={fCategoria}
+                options={CATEGORIAS.map(c => ({ value: c, label: t('categoria.' + c) }))}
                 onChange={setFCategoria}
               />
               <FilterSelect
-                label="Repartidor" value={fRepartidor}
+                label={t('analytics.filter.repartidor')} value={fRepartidor}
                 options={repOptions}
                 onChange={setFRepartidor}
               />
               <FilterSelect
-                label="Estado" value={fEstado}
-                options={ESTADOS_FILTRO.map(e => ({ value: e, label: ESTADO_LABELS[e] }))}
+                label={t('analytics.filter.estado')} value={fEstado}
+                options={ESTADOS_FILTRO.map(e => ({ value: e, label: t('estado.' + e) }))}
                 onChange={setFEstado}
               />
             </div>
 
             {/* Active chips */}
             {fZona && (
-              <ActiveChip label={`Zona: ${zonaLookup[fZona] ?? fZona}`} onRemove={() => setFZona('')} />
+              <ActiveChip label={t('analytics.chip.zona').replace('{value}', tZona(zonaLookup[fZona] ?? fZona))} onRemove={() => setFZona('')} />
             )}
             {fCategoria && (
-              <ActiveChip label={`Cat: ${CAT_LABELS[fCategoria]}`} onRemove={() => setFCategoria('')} />
+              <ActiveChip label={t('analytics.chip.cat').replace('{value}', t('categoria.' + fCategoria))} onRemove={() => setFCategoria('')} />
             )}
             {fRepartidor && (
               <ActiveChip label={repOptions.find(r => r.value === fRepartidor)?.label ?? fRepartidor} onRemove={() => setFRepartidor('')} />
             )}
             {fEstado && (
-              <ActiveChip label={ESTADO_LABELS[fEstado]} onRemove={() => setFEstado('')} />
+              <ActiveChip label={t('estado.' + fEstado)} onRemove={() => setFEstado('')} />
             )}
             {hasFilter && (
               <button
                 onClick={clearFilters}
                 className="text-xs font-semibold text-slate-400 hover:text-slate-700 transition-colors ml-1 underline underline-offset-2"
               >
-                Limpiar todo
+                {t('common.clearAll')}
               </button>
             )}
           </div>
@@ -551,40 +558,40 @@ export default function Analytics() {
         {/* ── KPIs ── */}
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <KpiCard
-            label="Ingresos" value={fmtBs(kpiIngresos)}
-            subvalue="Pedidos entregados"
+            label={t('analytics.kpi.ingresos')} value={fmtBs(kpiIngresos)}
+            subvalue={t('analytics.kpi.ingresos.sub')}
             icon={<IconTrendUp />} accent="#6366f1"
             delta={kpiDelta ?? undefined}
-            deltaLabel="vs período ant."
+            deltaLabel={t('analytics.kpi.ingresos.delta')}
             loading={loading}
           />
           <KpiCard
-            label="Pedidos" value={fmtNum(kpiPedidos)}
-            subvalue="Total en período"
+            label={t('analytics.kpi.pedidos')} value={fmtNum(kpiPedidos)}
+            subvalue={t('analytics.kpi.pedidos.sub')}
             icon={<IconPackage />} accent="#3b82f6"
             loading={loading}
           />
           <KpiCard
-            label="Tasa entrega" value={fmtPct(kpiTasaEntrega)}
-            subvalue={`${fmtNum(kpiEntregados)} entregados`}
+            label={t('analytics.kpi.tasaEntrega')} value={fmtPct(kpiTasaEntrega)}
+            subvalue={t('analytics.kpi.tasaEntrega.sub').replace('{count}', fmtNum(kpiEntregados))}
             icon={<IconCheck />} accent="#22c55e"
             loading={loading}
           />
           <KpiCard
-            label="Ticket promedio" value={fmtBs(kpiTicketProm)}
-            subvalue="Por pedido entregado"
+            label={t('analytics.kpi.ticket')} value={fmtBs(kpiTicketProm)}
+            subvalue={t('analytics.kpi.ticket.sub')}
             icon={<IconReceipt />} accent="#f59e0b"
             loading={loading}
           />
           <KpiCard
-            label="Pedidos fallidos" value={fmtNum(kpiFallidos)}
-            subvalue={kpiPedidos > 0 ? `${Math.round((kpiFallidos/kpiPedidos)*100)}% del total` : '—'}
+            label={t('analytics.kpi.fallidos')} value={fmtNum(kpiFallidos)}
+            subvalue={kpiPedidos > 0 ? t('analytics.kpi.fallidos.sub').replace('{pct}', String(Math.round((kpiFallidos/kpiPedidos)*100))) : '—'}
             icon={<IconAlert />} accent="#ef4444"
             loading={loading}
           />
           <KpiCard
-            label="Mejor repartidor" value={kpiEstrella}
-            subvalue={repartidorData[0] ? `${repartidorData[0].entregados} entregas` : '—'}
+            label={t('analytics.kpi.mejorRepartidor')} value={kpiEstrella}
+            subvalue={repartidorData[0] ? t('analytics.kpi.mejorRepartidor.sub').replace('{count}', String(repartidorData[0].entregados)) : '—'}
             icon={<IconStar />} accent="#f59e0b"
             loading={loading}
           />
@@ -595,8 +602,8 @@ export default function Analytics() {
 
           {/* Gráfico combinado pedidos + ingresos */}
           <ChartCard
-            title="Evolución mensual"
-            subtitle="Pedidos (eje izq.) · Ingresos Bs. (eje der.)"
+            title={t('analytics.chart.evolucion.title')}
+            subtitle={t('analytics.chart.evolucion.subtitle')}
             loading={loading}
             height={260}
             className="xl:col-span-2"
@@ -625,7 +632,7 @@ export default function Analytics() {
                       yAxisId="pedidos"
                       type="monotone"
                       dataKey="pedidos"
-                      name="Pedidos"
+                      name={t('analytics.series.pedidos')}
                       stroke="#6366f1"
                       strokeWidth={2.5}
                       dot={{ r: 4, fill: '#6366f1', strokeWidth: 0 }}
@@ -638,7 +645,7 @@ export default function Analytics() {
                       yAxisId="ingresos"
                       type="monotone"
                       dataKey="ingresos"
-                      name="Ingresos Bs."
+                      name={t('analytics.series.ingresos')}
                       stroke="#22c55e"
                       strokeWidth={2.5}
                       strokeDasharray="5 3"
@@ -656,8 +663,8 @@ export default function Analytics() {
 
           {/* Donut de estados */}
           <ChartCard
-            title="Por estado"
-            subtitle="Distribución de pedidos"
+            title={t('analytics.chart.porEstado.title')}
+            subtitle={t('analytics.chart.porEstado.subtitle')}
             loading={loading}
             height={260}
           >
@@ -691,7 +698,7 @@ export default function Analytics() {
                       <div key={e.estado} className="flex items-center justify-between text-xs">
                         <span className="flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: e.color }} />
-                          <span className="text-slate-600 font-medium">{e.estado}</span>
+                          <span className="text-slate-600 font-medium">{estadoLabel(e.estado)}</span>
                         </span>
                         <span className="font-bold text-slate-800">
                           {fmtNum(e.valor)}
@@ -713,8 +720,8 @@ export default function Analytics() {
 
           {/* Performance repartidores */}
           <ChartCard
-            title="Performance de repartidores"
-            subtitle="Entregas completadas y tasa de éxito"
+            title={t('analytics.chart.performance.title')}
+            subtitle={t('analytics.chart.performance.subtitle')}
             loading={loading}
             height={260}
           >
@@ -738,8 +745,8 @@ export default function Analytics() {
                     />
                     <Tooltip content={<Tip />} />
                     <Legend wrapperStyle={{ fontFamily: FONT, fontSize: 11 }} />
-                    <Bar dataKey="pedidos"    name="Total"      fill="#c7d2fe" radius={[0, 4, 4, 0]} isAnimationActive />
-                    <Bar dataKey="entregados" name="Entregados" fill="#6366f1" radius={[0, 4, 4, 0]} isAnimationActive>
+                    <Bar dataKey="pedidos"    name={t('analytics.series.total')}      fill="#c7d2fe" radius={[0, 4, 4, 0]} isAnimationActive />
+                    <Bar dataKey="entregados" name={t('analytics.series.entregados')} fill="#6366f1" radius={[0, 4, 4, 0]} isAnimationActive>
                       <LabelList
                         dataKey="tasa"
                         position="right"
@@ -755,8 +762,8 @@ export default function Analytics() {
 
           {/* Top productos por ingresos */}
           <ChartCard
-            title="Top productos"
-            subtitle="Por ingresos generados (Bs.)"
+            title={t('analytics.chart.topProductos.title')}
+            subtitle={t('analytics.chart.topProductos.subtitle')}
             loading={loading}
             height={260}
           >
@@ -780,7 +787,7 @@ export default function Analytics() {
                       axisLine={false} tickLine={false} width={110}
                     />
                     <Tooltip content={<Tip />} />
-                    <Bar dataKey="valor" name="Ingresos Bs." radius={[0, 4, 4, 0]} isAnimationActive>
+                    <Bar dataKey="valor" name={t('analytics.series.ingresos')} radius={[0, 4, 4, 0]} isAnimationActive>
                       {topProdData.map((_: TopItem, i: number) => (
                         <Cell key={i} fill={PROD_COLORS[i % PROD_COLORS.length]} />
                       ))}
@@ -800,8 +807,8 @@ export default function Analytics() {
 
         {/* ── Row 3: Comparativa por zona ── */}
         <ChartCard
-          title="Comparativa por zona"
-          subtitle="Total pedidos · Entregados · Ingresos Bs."
+          title={t('analytics.chart.porZona.title')}
+          subtitle={t('analytics.chart.porZona.subtitle')}
           loading={loading}
           height={260}
         >
@@ -809,7 +816,7 @@ export default function Analytics() {
             ? <EmptyState onClear={clearFilters} />
             : (
               <ResponsiveContainer width="100%" height={260}>
-                <ComposedChart data={porZonaData} margin={{ top: 18, right: 20, left: -10, bottom: 0 }} barCategoryGap="22%">
+                <ComposedChart data={porZonaDataI18n} margin={{ top: 18, right: 20, left: -10, bottom: 0 }} barCategoryGap="22%">
                   <CartesianGrid {...gridProps} />
                   <XAxis dataKey="nombre" tick={{ ...axisStyle, fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis yAxisId="cnt" orientation="left"  tick={axisStyle} axisLine={false} tickLine={false} />
@@ -820,8 +827,8 @@ export default function Analytics() {
                   />
                   <Tooltip content={<Tip />} />
                   <Legend wrapperStyle={{ fontFamily: FONT, fontSize: 11 }} />
-                  <Bar yAxisId="cnt" dataKey="pedidos"    name="Total"        radius={[4,4,0,0]} isAnimationActive>
-                    {porZonaData.map((z: ZonaComp, i: number) => (
+                  <Bar yAxisId="cnt" dataKey="pedidos"    name={t('analytics.series.total')}        radius={[4,4,0,0]} isAnimationActive>
+                    {porZonaDataI18n.map((z: ZonaComp, i: number) => (
                       <Cell key={z.nombre} fill={`${ZONA_COLORS[i % ZONA_COLORS.length]}40`} />
                     ))}
                     <LabelList
@@ -830,8 +837,8 @@ export default function Analytics() {
                       style={{ fontSize: 10, fontFamily: FONT, fill: '#64748b', fontWeight: 700 }}
                     />
                   </Bar>
-                  <Bar yAxisId="cnt" dataKey="entregados" name="Entregados"   radius={[4,4,0,0]} isAnimationActive>
-                    {porZonaData.map((z: ZonaComp, i: number) => (
+                  <Bar yAxisId="cnt" dataKey="entregados" name={t('analytics.series.entregados')}   radius={[4,4,0,0]} isAnimationActive>
+                    {porZonaDataI18n.map((z: ZonaComp, i: number) => (
                       <Cell key={z.nombre} fill={ZONA_COLORS[i % ZONA_COLORS.length]} />
                     ))}
                     <LabelList
@@ -840,7 +847,7 @@ export default function Analytics() {
                       style={{ fontSize: 10, fontFamily: FONT, fill: '#475569', fontWeight: 700 }}
                     />
                   </Bar>
-                  <Bar yAxisId="ing" dataKey="ingresos" name="Ingresos Bs." fill="#f59e0b" radius={[4,4,0,0]} isAnimationActive>
+                  <Bar yAxisId="ing" dataKey="ingresos" name={t('analytics.series.ingresos')} fill="#f59e0b" radius={[4,4,0,0]} isAnimationActive>
                     <LabelList
                       dataKey="ingresos"
                       position="top"
@@ -858,11 +865,12 @@ export default function Analytics() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold text-slate-800 tracking-tight">Distribución geográfica</h2>
+              <h2 className="text-sm font-bold text-slate-800 tracking-tight">{t('analytics.mapa.title')}</h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Clientes georeferenciados en Santa Cruz de la Sierra
+                {t('analytics.mapa.subtitle')}
                 {!mapaLoading && mapaClientes.length > 0 && (
-                  <> · <strong className="text-slate-600">{mapaClientes.length}</strong> clientes</>
+                  <> · <strong className="text-slate-600">{mapaClientes.length}</strong>{' '}
+                    {t('analytics.mapa.clientes').replace('{count}', '').trim()}</>
                 )}
               </p>
             </div>
@@ -875,7 +883,7 @@ export default function Analytics() {
               <Skel h={500} />
             ) : mapaClientes.length === 0 ? (
               <div className="flex items-center justify-center" style={{ height: 500 }}>
-                <p className="text-sm text-slate-400">Sin clientes georeferenciados</p>
+                <p className="text-sm text-slate-400">{t('analytics.mapa.empty')}</p>
               </div>
             ) : (
               <Suspense fallback={<Skel h={500} />}>
@@ -886,7 +894,7 @@ export default function Analytics() {
         </div>
 
         <footer className="text-center py-4">
-          <p className="text-xs text-slate-400">RapiDash CRM · Distribución Farmacéutica · Santa Cruz, Bolivia</p>
+          <p className="text-xs text-slate-400">{t('analytics.footer')}</p>
         </footer>
       </main>
     </>

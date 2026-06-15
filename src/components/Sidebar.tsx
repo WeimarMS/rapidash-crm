@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useT, type TransKey } from '../contexts/LanguageContext'
 import LogoCapsula from './LogoCapsula'
 import type { Rol } from '../lib/auth'
 import { canAccess } from '../lib/permissions'
@@ -9,68 +10,68 @@ import { canAccess } from '../lib/permissions'
 // La visibilidad por rol no se define acá: se deriva de canAccess (permissions.ts),
 // la misma fuente de verdad que usa el guard de rutas en App.tsx.
 
-const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode }[] = [
+const NAV_ITEMS: { labelKey: TransKey; path: string; icon: React.ReactNode }[] = [
   {
-    label: 'Dashboard', path: '/',
+    labelKey: 'nav.dashboard', path: '/',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
       <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
     </svg>,
   },
   {
-    label: 'Pedidos', path: '/pedidos',
+    labelKey: 'nav.pedidos', path: '/pedidos',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
       <rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>
     </svg>,
   },
   {
-    label: 'Clientes', path: '/clientes',
+    labelKey: 'nav.clientes', path: '/clientes',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
     </svg>,
   },
   {
-    label: 'Productos', path: '/productos',
+    labelKey: 'nav.productos', path: '/productos',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
     </svg>,
   },
   {
-    label: 'Repartidores', path: '/repartidores',
+    labelKey: 'nav.repartidores', path: '/repartidores',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
     </svg>,
   },
   {
-    label: 'Rutas', path: '/rutas',
+    labelKey: 'nav.rutas', path: '/rutas',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M3 12h18M3 6l9-3 9 3M3 18l9 3 9-3"/>
     </svg>,
   },
   {
-    label: 'Zonas', path: '/zonas',
+    labelKey: 'nav.zonas', path: '/zonas',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/>
     </svg>,
   },
   {
-    label: 'Incidencias', path: '/incidencias',
+    labelKey: 'nav.incidencias', path: '/incidencias',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
       <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
     </svg>,
   },
   {
-    label: 'Analytics', path: '/analytics',
+    labelKey: 'nav.analytics', path: '/analytics',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
       <line x1="6" y1="20" x2="6" y2="14"/>
     </svg>,
   },
   {
-    label: 'Usuarios', path: '/usuarios',
+    labelKey: 'nav.usuarios', path: '/usuarios',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
       <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
@@ -81,12 +82,12 @@ const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode }[] = [
 
 // ─── Role display config ──────────────────────────────────────────────────────
 
-const ROL_CFG: Record<Rol, { label: string; bg: string; text: string }> = {
-  admin:           { label: 'Admin',      bg: 'bg-blue-50',    text: 'text-blue-700'    },
-  supervisor_zona: { label: 'Supervisor', bg: 'bg-violet-50',  text: 'text-violet-700'  },
-  repartidor:      { label: 'Repartidor', bg: 'bg-orange-50',  text: 'text-orange-700'  },
-  cliente:         { label: 'Cliente',    bg: 'bg-teal-50',    text: 'text-teal-700'    },
-  demo:            { label: 'Demo',       bg: 'bg-emerald-50', text: 'text-emerald-700' },
+const ROL_CFG: Record<Rol, { labelKey: TransKey; bg: string; text: string }> = {
+  admin:           { labelKey: 'role.admin',           bg: 'bg-blue-50',    text: 'text-blue-700'    },
+  supervisor_zona: { labelKey: 'role.supervisor_zona', bg: 'bg-violet-50',  text: 'text-violet-700'  },
+  repartidor:      { labelKey: 'role.repartidor',      bg: 'bg-orange-50',  text: 'text-orange-700'  },
+  cliente:         { labelKey: 'role.cliente',         bg: 'bg-teal-50',    text: 'text-teal-700'    },
+  demo:            { labelKey: 'role.demo',            bg: 'bg-emerald-50', text: 'text-emerald-700' },
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
@@ -96,6 +97,7 @@ const ROL_CFG: Record<Rol, { label: string; bg: string; text: string }> = {
 
 export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onToggle: () => void }) {
   const { profile } = useAuth()
+  const { t }       = useT()
   const rol         = profile?.rol ?? 'cliente'
   const visibleItems = NAV_ITEMS.filter(item => canAccess(rol, item.path))
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -124,12 +126,12 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
         </div>
 
         <nav className={`flex flex-col gap-1 flex-1 ${expanded ? 'px-3' : 'items-center'}`}>
-          {visibleItems.map(({ label, path, icon }) => (
+          {visibleItems.map(({ labelKey, path, icon }) => (
             <NavLink
-              key={label}
+              key={labelKey}
               to={path}
               end={path === '/'}
-              title={expanded ? undefined : label}
+              title={expanded ? undefined : t(labelKey)}
               className={({ isActive }) =>
                 `relative rounded-xl flex items-center transition-colors ${
                   expanded ? 'gap-3 px-3 py-2.5 text-sm font-semibold' : 'w-10 h-10 justify-center'
@@ -146,7 +148,7 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
                     />
                   )}
                   {icon}
-                  {expanded && <span className="whitespace-nowrap">{label}</span>}
+                  {expanded && <span className="whitespace-nowrap">{t(labelKey)}</span>}
                 </>
               )}
             </NavLink>
@@ -157,7 +159,7 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
         <div className={`mb-2 ${expanded ? 'px-3' : 'flex justify-center'}`}>
           <button
             onClick={onToggle}
-            title={expanded ? 'Colapsar menú' : 'Expandir menú'}
+            title={expanded ? t('header.collapseMenu') : t('header.expandMenu')}
             className={`rounded-xl flex items-center text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors ${
               expanded ? 'gap-3 px-3 py-2.5 text-sm font-semibold w-full' : 'w-10 h-10 justify-center'
             }`}
@@ -168,7 +170,7 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
             >
               <polyline points="9 18 15 12 9 6" />
             </svg>
-            {expanded && <span className="whitespace-nowrap">Colapsar</span>}
+            {expanded && <span className="whitespace-nowrap">{t('header.collapse')}</span>}
           </button>
         </div>
 
@@ -184,7 +186,7 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
       >
         <button
           onClick={() => setDrawerOpen(true)}
-          aria-label="Abrir menú"
+          aria-label={t('header.openMenu')}
           className="w-10 h-10 -ml-2 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition-colors"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
@@ -220,7 +222,7 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
               </div>
               <button
                 onClick={() => setDrawerOpen(false)}
-                aria-label="Cerrar menú"
+                aria-label={t('header.closeMenu')}
                 className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
@@ -231,9 +233,9 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
 
             {/* Drawer nav */}
             <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-              {visibleItems.map(({ label, path, icon }) => (
+              {visibleItems.map(({ labelKey, path, icon }) => (
                 <NavLink
-                  key={label}
+                  key={labelKey}
                   to={path}
                   end={path === '/'}
                   onClick={() => setDrawerOpen(false)}
@@ -245,7 +247,7 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
                   style={({ isActive }) => isActive ? { background: 'rgba(30,64,175,0.4)' } : {}}
                 >
                   {icon}
-                  {label}
+                  {t(labelKey)}
                 </NavLink>
               ))}
             </nav>
@@ -263,6 +265,7 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
 
 function DrawerUserFooter() {
   const { profile, signOut } = useAuth()
+  const { t }    = useT()
   const initials = profile
     ? `${profile.nombre.charAt(0)}${profile.apellido.charAt(0)}`.toUpperCase()
     : '?'
@@ -278,7 +281,7 @@ function DrawerUserFooter() {
         <div className="min-w-0">
           <p className="text-sm font-bold text-white truncate">{fullName}</p>
           <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${rolCfg.bg} ${rolCfg.text}`}>
-            {rolCfg.label}
+            {t(rolCfg.labelKey)}
           </span>
         </div>
       </div>
@@ -289,7 +292,7 @@ function DrawerUserFooter() {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
           <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
         </svg>
-        Cerrar sesión
+        {t('header.signOut')}
       </button>
     </div>
   )
@@ -299,6 +302,7 @@ function DrawerUserFooter() {
 
 function UserMenu({ railWidth = 64 }: { railWidth?: number }) {
   const { profile, signOut } = useAuth()
+  const { t }                = useT()
   const [open, setOpen]      = useState(false)
   const btnRef               = useRef<HTMLButtonElement>(null)
   const popupRef             = useRef<HTMLDivElement>(null)
@@ -326,7 +330,7 @@ function UserMenu({ railWidth = 64 }: { railWidth?: number }) {
       <button
         ref={btnRef}
         onClick={() => setOpen(v => !v)}
-        title="Mi cuenta"
+        title={t('header.account')}
         className="w-9 h-9 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-200 text-xs font-bold transition-colors"
       >
         {initials}
@@ -348,7 +352,7 @@ function UserMenu({ railWidth = 64 }: { railWidth?: number }) {
                 <p className="text-sm font-bold text-slate-900 truncate">{fullName}</p>
                 <p className="text-xs text-slate-500 truncate">@{profile?.usuario ?? '…'}</p>
                 <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold mt-0.5 ${rolCfg.bg} ${rolCfg.text}`}>
-                  {rolCfg.label}
+                  {t(rolCfg.labelKey)}
                 </span>
               </div>
             </div>
@@ -365,7 +369,7 @@ function UserMenu({ railWidth = 64 }: { railWidth?: number }) {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 flex-shrink-0">
                 <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
               </svg>
-              Cerrar sesión
+              {t('header.signOut')}
             </button>
           </div>
         </div>

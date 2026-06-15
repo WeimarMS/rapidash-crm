@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import LogoCapsula from '../components/LogoCapsula'
+import { BuiltBySignature } from '../components/BuiltBy'
 
 // ─── Red de rutas de fondo (columna izquierda) ────────────────────────────────
 
@@ -197,10 +198,10 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Footer izquierda — solo desktop */}
-        <p className="hidden lg:block absolute bottom-6 left-16 z-10 rd-mono text-xs text-emerald-300/80">
-          {'// built by Weimar Miranda'}
-        </p>
+        {/* Firma destacada — solo desktop */}
+        <div className="hidden lg:block absolute bottom-8 left-16 z-10 anim-card" style={{ animationDelay: '640ms' }}>
+          <BuiltBySignature />
+        </div>
       </section>
 
       {/* ── Columna derecha: login ── */}
@@ -316,6 +317,14 @@ export default function Login() {
             </>
           )}
 
+          {/* ── Firma destacada — solo móvil (la carátula oscura está oculta) ── */}
+          <div
+            className="lg:hidden mt-8 rounded-2xl px-4 py-3 flex justify-center"
+            style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}
+          >
+            <BuiltBySignature />
+          </div>
+
           {/* ── Contacto ── */}
           <div className="mt-10 pt-6 border-t border-slate-100 text-center space-y-1.5">
             <p className="text-sm font-bold text-slate-800">Like what you see?</p>
@@ -323,23 +332,6 @@ export default function Login() {
               I build custom dashboards &amp; CRMs for your business.
             </p>
             <p className="text-xs text-slate-500">🌐 Available for remote work worldwide</p>
-            <p className="text-xs">
-              <a
-                href="https://wa.me/59176700989"
-                target="_blank" rel="noopener noreferrer"
-                className="text-emerald-700 font-semibold hover:underline"
-              >
-                📱 +591 76700989 (WhatsApp)
-              </a>
-            </p>
-            <p className="text-xs">
-              <a
-                href="mailto:weimar.miranda.s@gmail.com"
-                className="text-emerald-700 font-semibold hover:underline"
-              >
-                ✉ weimar.miranda.s@gmail.com
-              </a>
-            </p>
             <p className="rd-mono text-[11px] text-slate-400 pt-2">
               Weimar Miranda — BI &amp; Automation Consultant
             </p>

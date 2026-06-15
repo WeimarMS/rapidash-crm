@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchRutas, fetchRutaOptions, createRuta, type Ruta, type EstadoRuta, type RutaOption } from '../lib/rutas'
 import { useAuth } from '../contexts/AuthContext'
+import { useT } from '../contexts/LanguageContext'
 import { isReadOnly } from '../lib/permissions'
 import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
@@ -41,6 +42,7 @@ function NuevaRutaModal({ onClose, onSuccess }: {
 
   const [saving, setSaving]         = useState(false)
   const [err, setErr]               = useState<string | null>(null)
+  const { t, tZona } = useT()
 
   useEffect(() => {
     fetchRutaOptions()
@@ -56,8 +58,8 @@ function NuevaRutaModal({ onClose, onSuccess }: {
   const zonaSeleccionada = opts?.zonas.find(z => z.id === zonaId)
 
   const handleGuardar = async () => {
-    if (!fecha)  { setErr('La fecha es obligatoria');      return }
-    if (!zonaId) { setErr('Selecciona una zona');          return }
+    if (!fecha)  { setErr(t('rutas.modal.errDate')); return }
+    if (!zonaId) { setErr(t('rutas.modal.errZone')); return }
     setErr(null)
     setSaving(true)
     try {
@@ -88,8 +90,8 @@ function NuevaRutaModal({ onClose, onSuccess }: {
         {/* Header */}
         <div className="px-6 pt-6 pb-5 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Rutas</p>
-            <h2 className="text-lg font-extrabold text-slate-900">Nueva ruta</h2>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">{t('rutas.modal.eyebrow')}</p>
+            <h2 className="text-lg font-extrabold text-slate-900">{t('rutas.modal.title')}</h2>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -107,7 +109,7 @@ function NuevaRutaModal({ onClose, onSuccess }: {
             <>
               {/* Fecha */}
               <div>
-                <label className={labelCls}>Fecha <span className="text-rose-500">*</span></label>
+                <label className={labelCls}>{t('rutas.modal.date')} <span className="text-rose-500">*</span></label>
                 <input
                   type="date"
                   value={fecha}
@@ -118,7 +120,7 @@ function NuevaRutaModal({ onClose, onSuccess }: {
 
               {/* Zona */}
               <div>
-                <label className={labelCls}>Zona <span className="text-rose-500">*</span></label>
+                <label className={labelCls}>{t('rutas.modal.zone')} <span className="text-rose-500">*</span></label>
                 <div className="relative">
                   <select
                     value={zonaId}
@@ -127,7 +129,7 @@ function NuevaRutaModal({ onClose, onSuccess }: {
                     style={{ paddingLeft: zonaSeleccionada ? '2.5rem' : undefined }}
                   >
                     {opts?.zonas.map(z => (
-                      <option key={z.id} value={z.id}>{z.nombre}</option>
+                      <option key={z.id} value={z.id}>{tZona(z.nombre)}</option>
                     ))}
                   </select>
                   {zonaSeleccionada && (
@@ -141,13 +143,13 @@ function NuevaRutaModal({ onClose, onSuccess }: {
 
               {/* Repartidor */}
               <div>
-                <label className={labelCls}>Repartidor</label>
+                <label className={labelCls}>{t('rutas.modal.courier')}</label>
                 <select
                   value={repartidorId}
                   onChange={e => setRepartidorId(e.target.value)}
                   className={inputCls}
                 >
-                  <option value="">Sin asignar</option>
+                  <option value="">{t('rutas.modal.unassigned')}</option>
                   {opts?.repartidores.map(r => (
                     <option key={r.id} value={r.id}>{r.nombre} {r.apellido}</option>
                   ))}
@@ -156,7 +158,7 @@ function NuevaRutaModal({ onClose, onSuccess }: {
 
               {/* Km estimado */}
               <div>
-                <label className={labelCls}>Km estimado</label>
+                <label className={labelCls}>{t('rutas.modal.kmEstimate')}</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -164,7 +166,7 @@ function NuevaRutaModal({ onClose, onSuccess }: {
                     max="9999"
                     value={kmEstimado}
                     onChange={e => setKmEstimado(e.target.value)}
-                    placeholder="Ej. 45"
+                    placeholder={t('rutas.modal.phKm')}
                     className={`${inputCls} pr-12`}
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 pointer-events-none">km</span>
@@ -174,7 +176,7 @@ function NuevaRutaModal({ onClose, onSuccess }: {
               {/* Estado (readonly) */}
               <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
                 <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
-                <span className="text-xs font-semibold text-amber-700">Estado inicial: Planificada</span>
+                <span className="text-xs font-semibold text-amber-700">{t('rutas.modal.initialState')}</span>
               </div>
             </>
           )}
@@ -190,7 +192,7 @@ function NuevaRutaModal({ onClose, onSuccess }: {
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
           >
-            Cancelar
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleGuardar}
@@ -204,7 +206,7 @@ function NuevaRutaModal({ onClose, onSuccess }: {
                 <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
               </svg>
             )}
-            {saving ? 'Creando ruta…' : 'Crear ruta'}
+            {saving ? t('rutas.modal.submitting') : t('rutas.modal.submit')}
           </button>
         </div>
       </div>
@@ -223,6 +225,7 @@ export default function Rutas() {
   const [zonaFilter, setZonaFilter]     = useState('todas')
   const [showModal, setShowModal]       = useState(false)
   const { profile } = useAuth()
+  const { t, tZona } = useT()
   const readOnly = isReadOnly(profile?.rol)
   const [toast, setToast]               = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
 
@@ -240,7 +243,7 @@ export default function Rutas() {
   const handleRutaCreada = (nueva: Ruta) => {
     setRutas(prev => [nueva, ...prev])
     setShowModal(false)
-    showToast('success', `Ruta ${nueva.codigo} creada correctamente`)
+    showToast('success', t('rutas.toast.created').replace('{code}', nueva.codigo))
   }
 
   const zonas = useMemo(() => {
@@ -265,11 +268,11 @@ export default function Rutas() {
     <>
       <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Rutas</h1>
+          <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>{t('rutas.title')}</h1>
           <p className="hidden md:block text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
           <BuiltByMobile />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 lg:mr-24">
           <BuiltBy />
           {!readOnly && (
             <button
@@ -278,7 +281,7 @@ export default function Rutas() {
               style={{ background: '#1e40af' }}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
-              Nueva ruta
+              {t('rutas.new')}
             </button>
           )}
         </div>
@@ -290,10 +293,10 @@ export default function Rutas() {
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
           {loading ? Array.from({length:4}).map((_,i)=><Skeleton key={i} className="h-16" />) : (
             <>
-              <StatCard label="Total rutas" value={rutas.length} color="#1e40af" />
-              <StatCard label="Completadas" value={completadas} color="#15803d" />
-              <StatCard label="Pedidos cubiertos" value={totalPedidos} color="#0891b2" />
-              <StatCard label="Entregados" value={totalEntregados} color="#15803d" />
+              <StatCard label={t('rutas.stat.total')} value={rutas.length} color="#1e40af" />
+              <StatCard label={t('rutas.stat.completed')} value={completadas} color="#15803d" />
+              <StatCard label={t('rutas.stat.ordersCovered')} value={totalPedidos} color="#0891b2" />
+              <StatCard label={t('rutas.stat.delivered')} value={totalEntregados} color="#15803d" />
             </>
           )}
         </div>
@@ -301,32 +304,32 @@ export default function Rutas() {
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap">
           <div className="relative flex-1 max-w-xs">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input type="text" placeholder="Código o repartidor..." value={search} onChange={e=>setSearch(e.target.value)}
+            <input type="text" placeholder={t('rutas.search')} value={search} onChange={e=>setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all" />
           </div>
           <div className="flex flex-wrap gap-1.5">
-            <FilterPill active={estadoFilter==='todos'} onClick={()=>setEstadoFilter('todos')}>Todos</FilterPill>
-            {ESTADOS.map(e => <FilterPill key={e} active={estadoFilter===e} onClick={()=>setEstadoFilter(e)} color={ESTADO_CFG[e].dot}>{ESTADO_CFG[e].label}</FilterPill>)}
+            <FilterPill active={estadoFilter==='todos'} onClick={()=>setEstadoFilter('todos')}>{t('common.all')}</FilterPill>
+            {ESTADOS.map(e => <FilterPill key={e} active={estadoFilter===e} onClick={()=>setEstadoFilter(e)} color={ESTADO_CFG[e].dot}>{t('estadoRuta.'+e)}</FilterPill>)}
           </div>
           <div className="flex flex-wrap gap-1.5">
-            <FilterPill active={zonaFilter==='todas'} onClick={()=>setZonaFilter('todas')}>Todas las zonas</FilterPill>
-            {zonas.map(z => <FilterPill key={z.id} active={zonaFilter===z.id} onClick={()=>setZonaFilter(z.id)} color={z.color}>{z.nombre}</FilterPill>)}
+            <FilterPill active={zonaFilter==='todas'} onClick={()=>setZonaFilter('todas')}>{t('common.allZones')}</FilterPill>
+            {zonas.map(z => <FilterPill key={z.id} active={zonaFilter===z.id} onClick={()=>setZonaFilter(z.id)} color={z.color}>{tZona(z.nombre)}</FilterPill>)}
           </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500">{loading ? '…' : `${filtered.length} ruta${filtered.length!==1?'s':''}`}</p>
+            <p className="text-xs font-semibold text-slate-500">{loading ? '…' : `${filtered.length} ${filtered.length!==1?t('rutas.count.many'):t('rutas.count.one')}`}</p>
             {(estadoFilter!=='todos'||zonaFilter!=='todas'||search) && (
               <button className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
-                onClick={()=>{setEstadoFilter('todos');setZonaFilter('todas');setSearch('')}}>Limpiar</button>
+                onClick={()=>{setEstadoFilter('todos');setZonaFilter('todas');setSearch('')}}>{t('common.clear')}</button>
             )}
           </div>
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  {['Código','Fecha','Repartidor','Zona','Estado','Progreso','Horario'].map(h=>(
+                  {[t('rutas.col.code'),t('rutas.col.date'),t('rutas.col.courier'),t('rutas.col.zone'),t('rutas.col.status'),t('rutas.col.progress'),t('rutas.col.schedule')].map(h=>(
                     <th key={h} className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -335,7 +338,7 @@ export default function Rutas() {
                 {loading ? Array.from({length:6}).map((_,i)=>(
                   <tr key={i} className="border-b border-slate-50">{Array.from({length:7}).map((_,j)=><td key={j} className="px-6 py-3.5"><Skeleton className="h-4 w-20" /></td>)}</tr>
                 )) : filtered.length===0 ? (
-                  <tr><td colSpan={7} className="px-6 py-16 text-center text-slate-400 text-sm">Sin rutas</td></tr>
+                  <tr><td colSpan={7} className="px-6 py-16 text-center text-slate-400 text-sm">{t('rutas.empty')}</td></tr>
                 ) : filtered.map((r, i) => {
                   const cfg = ESTADO_CFG[r.estado]
                   const pct = r.total_pedidos > 0 ? Math.round((r.pedidos_entregados / r.total_pedidos) * 100) : 0
@@ -351,12 +354,12 @@ export default function Rutas() {
                       <td className="px-6 py-3.5 font-medium text-slate-800">{r.repartidor_nombre}</td>
                       <td className="px-6 py-3.5">
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{color:r.zona_color}}>
-                          <span className="w-2 h-2 rounded-full" style={{background:r.zona_color}} />{r.zona_nombre}
+                          <span className="w-2 h-2 rounded-full" style={{background:r.zona_color}} />{tZona(r.zona_nombre)}
                         </span>
                       </td>
                       <td className="px-6 py-3.5">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{background:cfg.dot}} />{cfg.label}
+                          <span className="w-1.5 h-1.5 rounded-full" style={{background:cfg.dot}} />{t('estadoRuta.'+r.estado)}
                         </span>
                       </td>
                       <td className="px-6 py-3.5">
@@ -386,7 +389,7 @@ export default function Rutas() {
                 {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
               </div>
             ) : filtered.length === 0 ? (
-              <div className="px-6 py-16 text-center text-slate-400 text-sm">Sin rutas</div>
+              <div className="px-6 py-16 text-center text-slate-400 text-sm">{t('rutas.empty')}</div>
             ) : (
               <div className="divide-y divide-slate-100">
                 {filtered.map(r => {
@@ -398,13 +401,13 @@ export default function Rutas() {
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-data text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">{r.codigo}</span>
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{background:cfg.dot}} />{cfg.label}
+                          <span className="w-1.5 h-1.5 rounded-full" style={{background:cfg.dot}} />{t('estadoRuta.'+r.estado)}
                         </span>
                       </div>
                       <p className="font-medium text-slate-800 text-sm truncate">{r.repartidor_nombre}</p>
                       <div className="flex items-center justify-between gap-2 text-xs">
                         <span className="inline-flex items-center gap-1.5 font-semibold" style={{color:r.zona_color}}>
-                          <span className="w-2 h-2 rounded-full" style={{background:r.zona_color}} />{r.zona_nombre}
+                          <span className="w-2 h-2 rounded-full" style={{background:r.zona_color}} />{tZona(r.zona_nombre)}
                         </span>
                         <span className="text-slate-400">
                           {new Date(r.fecha).toLocaleDateString('es-BO',{day:'2-digit',month:'2-digit',year:'2-digit'})}

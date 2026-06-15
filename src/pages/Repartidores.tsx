@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchRepartidores, toggleRepartidorActivo, fetchRepartidorFormOptions, createRepartidor, type Repartidor, type RepartidorFormOptions } from '../lib/repartidores'
 import { useAuth } from '../contexts/AuthContext'
+import { useT } from '../contexts/LanguageContext'
 import { isReadOnly } from '../lib/permissions'
 import BuiltBy, { BuiltByMobile } from '../components/BuiltBy'
 
@@ -29,6 +30,7 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
   const [actError, setActError] = useState<string | null>(null)
   const tasaColor = rep.tasa_entrega >= 80 ? '#16a34a' : rep.tasa_entrega >= 60 ? '#d97706' : '#dc2626'
   const { profile } = useAuth()
+  const { t, tZona } = useT()
   const readOnly = isReadOnly(profile?.rol)
   return (
     <>
@@ -36,15 +38,15 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
       <aside className="fixed right-0 top-0 bottom-0 w-full sm:w-96 bg-white z-40 shadow-2xl flex flex-col slide-in-right">
         <div className="px-6 pt-6 pb-5 border-b border-slate-100 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Repartidor</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">{t('repartidores.drawer.eyebrow')}</p>
             <h2 className="text-lg font-extrabold text-slate-900">{rep.nombre} {rep.apellido}</h2>
             <div className="flex items-center gap-2 mt-2">
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${rep.activo ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-600'}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${rep.activo ? 'bg-emerald-500' : 'bg-rose-400'}`} />
-                {rep.activo ? 'Activo' : 'Inactivo'}
+                {rep.activo ? t('common.active') : t('common.inactive')}
               </span>
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: rep.zona_color }}>
-                <span className="w-2 h-2 rounded-full" style={{ background: rep.zona_color }} />{rep.zona_nombre}
+                <span className="w-2 h-2 rounded-full" style={{ background: rep.zona_color }} />{tZona(rep.zona_nombre)}
               </span>
             </div>
           </div>
@@ -57,15 +59,15 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
           {/* Métricas */}
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-blue-50 rounded-xl px-3 py-3 text-center">
-              <p className="text-xs font-semibold text-blue-400 mb-1">Total</p>
+              <p className="text-xs font-semibold text-blue-400 mb-1">{t('repartidores.drawer.total')}</p>
               <p className="text-2xl font-extrabold text-blue-700">{rep.pedidos_total}</p>
             </div>
             <div className="bg-emerald-50 rounded-xl px-3 py-3 text-center">
-              <p className="text-xs font-semibold text-emerald-400 mb-1">Entregados</p>
+              <p className="text-xs font-semibold text-emerald-400 mb-1">{t('repartidores.drawer.delivered')}</p>
               <p className="text-2xl font-extrabold text-emerald-700">{rep.pedidos_entregados}</p>
             </div>
             <div className="rounded-xl px-3 py-3 text-center" style={{ background: `${tasaColor}15` }}>
-              <p className="text-xs font-semibold mb-1" style={{ color: tasaColor }}>Tasa</p>
+              <p className="text-xs font-semibold mb-1" style={{ color: tasaColor }}>{t('repartidores.drawer.rate')}</p>
               <p className="text-2xl font-extrabold" style={{ color: tasaColor }}>{rep.tasa_entrega}%</p>
             </div>
           </div>
@@ -73,7 +75,7 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
           {/* Barra de tasa */}
           <div>
             <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1.5">
-              <span>Tasa de entrega</span><span style={{ color: tasaColor }}>{rep.tasa_entrega}%</span>
+              <span>{t('common.deliveryRate')}</span><span style={{ color: tasaColor }}>{rep.tasa_entrega}%</span>
             </div>
             <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
               <div className="h-full rounded-full anim-bar" style={{ width: `${rep.tasa_entrega}%`, background: tasaColor }} />
@@ -82,9 +84,9 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
 
           {/* Info */}
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">Datos personales</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">{t('repartidores.drawer.personal')}</p>
             <div className="bg-slate-50 rounded-xl divide-y divide-slate-100 overflow-hidden">
-              {[['C.I.', rep.ci], ['Teléfono', rep.telefono ?? '—'], ['Zona', rep.zona_nombre]].map(([l,v]) => (
+              {[[t('repartidores.drawer.ci'), rep.ci], [t('repartidores.drawer.phone'), rep.telefono ?? '—'], [t('repartidores.drawer.zone'), tZona(rep.zona_nombre)]].map(([l,v]) => (
                 <div key={l} className="flex justify-between px-4 py-2.5">
                   <span className="text-xs font-medium text-slate-400">{l}</span>
                   <span className="text-xs font-semibold text-slate-700">{v}</span>
@@ -94,9 +96,9 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
           </div>
 
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">Vehículo</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">{t('repartidores.drawer.vehicle')}</p>
             <div className="bg-slate-50 rounded-xl divide-y divide-slate-100 overflow-hidden">
-              {[['Placa', rep.vehiculo_placa], ['Tipo', `${VEHICULO_ICON[rep.vehiculo_tipo] ?? ''} ${rep.vehiculo_tipo}`]].map(([l,v]) => (
+              {[[t('repartidores.drawer.plate'), rep.vehiculo_placa], [t('repartidores.drawer.type'), `${VEHICULO_ICON[rep.vehiculo_tipo] ?? ''} ${rep.vehiculo_tipo}`]].map(([l,v]) => (
                 <div key={l} className="flex justify-between px-4 py-2.5">
                   <span className="text-xs font-medium text-slate-400">{l}</span>
                   <span className="text-xs font-semibold text-slate-700">{v}</span>
@@ -113,7 +115,7 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
         )}
         {!readOnly && (
           <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
-            <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Editar</button>
+            <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">{t('common.edit')}</button>
             <button
               disabled={saving}
               onClick={async () => {
@@ -132,7 +134,7 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
                   <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
                 </svg>
               )}
-              {saving ? 'Guardando…' : rep.activo ? 'Desactivar' : 'Activar'}
+              {saving ? t('common.saving') : rep.activo ? t('common.deactivate') : t('common.activate')}
             </button>
           </div>
         )}
@@ -163,6 +165,7 @@ function NuevoRepartidorModal({ onClose, onSuccess }: {
   })
   const [saving, setSaving] = useState(false)
   const [err, setErr]       = useState<string | null>(null)
+  const { t, tZona } = useT()
 
   useEffect(() => {
     fetchRepartidorFormOptions().then(setOpts).catch(e => setOptsErr(e.message))
@@ -174,7 +177,7 @@ function NuevoRepartidorModal({ onClose, onSuccess }: {
 
   const handleSubmit = async () => {
     if (!form.nombre || !form.apellido || !form.ci || !form.zona_id || !form.vehiculo_id) {
-      setErr('Nombre, apellido, C.I., zona y vehículo son obligatorios'); return
+      setErr(t('repartidores.modal.required')); return
     }
     setErr(null); setSaving(true)
     try {
@@ -194,8 +197,8 @@ function NuevoRepartidorModal({ onClose, onSuccess }: {
         style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
         <div className="flex items-start justify-between mb-5">
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Repartidores</p>
-            <h2 className="text-lg font-extrabold text-slate-900">Nuevo repartidor</h2>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">{t('repartidores.modal.eyebrow')}</p>
+            <h2 className="text-lg font-extrabold text-slate-900">{t('repartidores.modal.title')}</h2>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -205,36 +208,36 @@ function NuevoRepartidorModal({ onClose, onSuccess }: {
         <div className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className={LBL}>Nombre *</label>
-              <input type="text" value={form.nombre} onChange={set('nombre')} placeholder="Ej. Carlos" className={INP} />
+              <label className={LBL}>{t('repartidores.modal.firstName')}</label>
+              <input type="text" value={form.nombre} onChange={set('nombre')} placeholder={t('repartidores.modal.phFirstName')} className={INP} />
             </div>
             <div>
-              <label className={LBL}>Apellido *</label>
-              <input type="text" value={form.apellido} onChange={set('apellido')} placeholder="Ej. Mamani" className={INP} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className={LBL}>C.I. / Licencia *</label>
-              <input type="text" value={form.ci} onChange={set('ci')} placeholder="Ej. 7812345" className={INP} />
-            </div>
-            <div>
-              <label className={LBL}>Teléfono</label>
-              <input type="tel" value={form.telefono} onChange={set('telefono')} placeholder="Ej. 77712345" className={INP} />
+              <label className={LBL}>{t('repartidores.modal.lastName')}</label>
+              <input type="text" value={form.apellido} onChange={set('apellido')} placeholder={t('repartidores.modal.phLastName')} className={INP} />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className={LBL}>Zona *</label>
+              <label className={LBL}>{t('repartidores.modal.ci')}</label>
+              <input type="text" value={form.ci} onChange={set('ci')} placeholder={t('repartidores.modal.phCi')} className={INP} />
+            </div>
+            <div>
+              <label className={LBL}>{t('repartidores.modal.phone')}</label>
+              <input type="tel" value={form.telefono} onChange={set('telefono')} placeholder={t('repartidores.modal.phPhone')} className={INP} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={LBL}>{t('repartidores.modal.zone')}</label>
               <select value={form.zona_id} onChange={set('zona_id')} className={INP}>
-                <option value="">— Seleccionar —</option>
-                {opts?.zonas.map(z => <option key={z.id} value={z.id}>{z.nombre}</option>)}
+                <option value="">{t('common.select')}</option>
+                {opts?.zonas.map(z => <option key={z.id} value={z.id}>{tZona(z.nombre)}</option>)}
               </select>
             </div>
             <div>
-              <label className={LBL}>Vehículo *</label>
+              <label className={LBL}>{t('repartidores.modal.vehicle')}</label>
               <select value={form.vehiculo_id} onChange={set('vehiculo_id')} className={INP}>
-                <option value="">— Seleccionar —</option>
+                <option value="">{t('common.select')}</option>
                 {opts?.vehiculos.map(v => (
                   <option key={v.id} value={v.id}>
                     {VEHICULO_ICON[v.tipo] ?? '🚚'} {v.placa} ({v.tipo})
@@ -247,13 +250,13 @@ function NuevoRepartidorModal({ onClose, onSuccess }: {
         {err && <p className="mt-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{err}</p>}
         <div className="flex gap-3 mt-5">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
-            Cancelar
+            {t('common.cancel')}
           </button>
           <button onClick={handleSubmit} disabled={saving || !opts}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
             style={{ background: '#1e40af' }}>
             {saving && <Spinner />}
-            {saving ? 'Guardando…' : 'Crear repartidor'}
+            {saving ? t('common.saving') : t('repartidores.modal.submit')}
           </button>
         </div>
       </div>
@@ -271,6 +274,7 @@ export default function Repartidores() {
   const [toast, setToast]               = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const [showNuevo, setShowNuevo]       = useState(false)
   const { profile } = useAuth()
+  const { t, tZona } = useT()
   const readOnly = isReadOnly(profile?.rol)
 
   const showToast = (type: 'success' | 'error', msg: string) => {
@@ -280,7 +284,7 @@ export default function Repartidores() {
 
   const handleNuevoRepartidor = (r: Repartidor) => {
     setRepartidores(prev => [...prev, r].sort((a, b) => a.nombre.localeCompare(b.nombre)))
-    showToast('success', `Repartidor ${r.nombre} ${r.apellido} creado correctamente`)
+    showToast('success', t('repartidores.toast.created').replace('{name}', `${r.nombre} ${r.apellido}`))
     setShowNuevo(false)
   }
 
@@ -296,7 +300,7 @@ export default function Repartidores() {
     const updated = { ...selected, activo: newActivo }
     setRepartidores(prev => prev.map(r => r.id === selected.id ? updated : r))
     setSelected(updated)
-    showToast('success', newActivo ? 'Repartidor activado correctamente' : 'Repartidor desactivado correctamente')
+    showToast('success', newActivo ? t('repartidores.toast.activated') : t('repartidores.toast.deactivated'))
   }
 
   const zonas = useMemo(() => {
@@ -319,16 +323,16 @@ export default function Repartidores() {
     <>
       <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>Repartidores</h1>
+          <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>{t('repartidores.title')}</h1>
           <p className="hidden md:block text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
           <BuiltByMobile />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 lg:mr-24">
           <BuiltBy />
           {!readOnly && (
             <button onClick={() => setShowNuevo(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity" style={{ background: '#1e40af' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><path d="M12 5v14M5 12h14"/></svg>
-              Nuevo repartidor
+              {t('repartidores.new')}
             </button>
           )}
         </div>
@@ -340,10 +344,10 @@ export default function Repartidores() {
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
           {loading ? Array.from({length:4}).map((_,i)=><Skeleton key={i} className="h-16" />) : (
             <>
-              <StatCard label="Total" value={repartidores.length} color="#1e40af" />
-              <StatCard label="Activos" value={activos} color="#15803d" />
-              <StatCard label="Inactivos" value={repartidores.length - activos} color="#64748b" />
-              <StatCard label="Tasa promedio" value={`${avgTasa}%`} color={avgTasa>=80?'#16a34a':avgTasa>=60?'#d97706':'#dc2626'} />
+              <StatCard label={t('repartidores.stat.total')} value={repartidores.length} color="#1e40af" />
+              <StatCard label={t('repartidores.stat.active')} value={activos} color="#15803d" />
+              <StatCard label={t('repartidores.stat.inactive')} value={repartidores.length - activos} color="#64748b" />
+              <StatCard label={t('repartidores.stat.avgRate')} value={`${avgTasa}%`} color={avgTasa>=80?'#16a34a':avgTasa>=60?'#d97706':'#dc2626'} />
             </>
           )}
         </div>
@@ -351,24 +355,24 @@ export default function Repartidores() {
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           <div className="relative flex-1 max-w-xs">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input type="text" placeholder="Nombre o placa..." value={search} onChange={e=>setSearch(e.target.value)}
+            <input type="text" placeholder={t('repartidores.search')} value={search} onChange={e=>setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all" />
           </div>
           <div className="flex flex-wrap gap-1.5">
-            <FilterPill active={zonaFilter==='todas'} onClick={()=>setZonaFilter('todas')}>Todas las zonas</FilterPill>
-            {zonas.map(z => <FilterPill key={z.id} active={zonaFilter===z.id} onClick={()=>setZonaFilter(z.id)} color={z.color}>{z.nombre}</FilterPill>)}
+            <FilterPill active={zonaFilter==='todas'} onClick={()=>setZonaFilter('todas')}>{t('common.allZones')}</FilterPill>
+            {zonas.map(z => <FilterPill key={z.id} active={zonaFilter===z.id} onClick={()=>setZonaFilter(z.id)} color={z.color}>{tZona(z.nombre)}</FilterPill>)}
           </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-6 py-3.5 border-b border-slate-100">
-            <p className="text-xs font-semibold text-slate-500">{loading ? '…' : `${filtered.length} repartidor${filtered.length!==1?'es':''}`}</p>
+            <p className="text-xs font-semibold text-slate-500">{loading ? '…' : `${filtered.length} ${filtered.length!==1?t('repartidores.count.many'):t('repartidores.count.one')}`}</p>
           </div>
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  {['Repartidor','Zona','Vehículo','Estado','Total ped.','Entregados','Tasa',''].map(h=>(
+                  {[t('repartidores.col.courier'),t('repartidores.col.zone'),t('repartidores.col.vehicle'),t('repartidores.col.status'),t('repartidores.col.totalOrders'),t('repartidores.col.delivered'),t('repartidores.col.rate'),''].map(h=>(
                     <th key={h} className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -379,8 +383,8 @@ export default function Repartidores() {
                 )) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-16 text-center">
-                      <p className="text-slate-400 text-sm">No se encontraron repartidores</p>
-                      <p className="text-slate-300 text-xs mt-1">Intenta con otros filtros</p>
+                      <p className="text-slate-400 text-sm">{t('repartidores.empty')}</p>
+                      <p className="text-slate-300 text-xs mt-1">{t('common.tryOtherFilters')}</p>
                     </td>
                   </tr>
                 ) : filtered.map((r, i) => {
@@ -393,7 +397,7 @@ export default function Repartidores() {
                       </td>
                       <td className="px-6 py-3.5">
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{color:r.zona_color}}>
-                          <span className="w-2 h-2 rounded-full" style={{background:r.zona_color}} />{r.zona_nombre}
+                          <span className="w-2 h-2 rounded-full" style={{background:r.zona_color}} />{tZona(r.zona_nombre)}
                         </span>
                       </td>
                       <td className="px-6 py-3.5">
@@ -402,7 +406,7 @@ export default function Repartidores() {
                       </td>
                       <td className="px-6 py-3.5">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${r.activo?'bg-emerald-50 text-emerald-700':'bg-rose-50 text-rose-600'}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${r.activo?'bg-emerald-500':'bg-rose-400'}`} />{r.activo?'Activo':'Inactivo'}
+                          <span className={`w-1.5 h-1.5 rounded-full ${r.activo?'bg-emerald-500':'bg-rose-400'}`} />{r.activo?t('common.active'):t('common.inactive')}
                         </span>
                       </td>
                       <td className="px-6 py-3.5 font-bold text-slate-700 text-center">{r.pedidos_total}</td>
@@ -417,7 +421,7 @@ export default function Repartidores() {
                       </td>
                       <td className="px-6 py-3.5">
                         <button className="text-xs font-semibold text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
-                          onClick={e=>{e.stopPropagation();setSelected(r)}}>Ver →</button>
+                          onClick={e=>{e.stopPropagation();setSelected(r)}}>{t('common.view')}</button>
                       </td>
                     </tr>
                   )
@@ -434,8 +438,8 @@ export default function Repartidores() {
               </div>
             ) : filtered.length === 0 ? (
               <div className="px-6 py-16 text-center">
-                <p className="text-slate-400 text-sm">No se encontraron repartidores</p>
-                <p className="text-slate-300 text-xs mt-1">Intenta con otros filtros</p>
+                <p className="text-slate-400 text-sm">{t('repartidores.empty')}</p>
+                <p className="text-slate-300 text-xs mt-1">{t('common.tryOtherFilters')}</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -453,20 +457,20 @@ export default function Repartidores() {
                           <p className="text-xs text-slate-400 mt-0.5">C.I. {r.ci}</p>
                         </div>
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold flex-shrink-0 ${r.activo?'bg-emerald-50 text-emerald-700':'bg-rose-50 text-rose-600'}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${r.activo?'bg-emerald-500':'bg-rose-400'}`} />{r.activo?'Activo':'Inactivo'}
+                          <span className={`w-1.5 h-1.5 rounded-full ${r.activo?'bg-emerald-500':'bg-rose-400'}`} />{r.activo?t('common.active'):t('common.inactive')}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{color:r.zona_color}}>
-                          <span className="w-2 h-2 rounded-full" style={{background:r.zona_color}} />{r.zona_nombre}
+                          <span className="w-2 h-2 rounded-full" style={{background:r.zona_color}} />{tZona(r.zona_nombre)}
                         </span>
                         <span className="text-xs font-semibold text-slate-600">
                           {VEHICULO_ICON[r.vehiculo_tipo] ?? ''} {r.vehiculo_placa}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-slate-500">Pedidos: <strong className="text-slate-800">{r.pedidos_total}</strong></span>
-                        <span className="text-slate-500">Entregados: <strong className="text-emerald-700">{r.pedidos_entregados}</strong></span>
+                        <span className="text-slate-500">{t('repartidores.card.orders')}: <strong className="text-slate-800">{r.pedidos_total}</strong></span>
+                        <span className="text-slate-500">{t('repartidores.card.delivered')}: <strong className="text-emerald-700">{r.pedidos_entregados}</strong></span>
                         <div className="flex items-center gap-1.5 flex-1 justify-end">
                           <div className="w-14 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                             <div className="h-full rounded-full" style={{width:`${r.tasa_entrega}%`,background:tasaColor}} />

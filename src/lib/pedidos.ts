@@ -118,15 +118,31 @@ export async function fetchPedidoFormOptions(): Promise<PedidoFormOptions> {
   }
 }
 
+export interface NewPedidoItemInput {
+  producto_id:     string
+  cantidad:        number
+  precio_unitario: number
+}
+
 export interface NewPedidoInput {
   cliente_id:             string
   repartidor_id:          string | null
   zona_id:                string
   fecha_entrega_estimada: string
   notas:                  string
+  items:                  NewPedidoItemInput[]
 }
 
 export async function createPedido(input: NewPedidoInput): Promise<Pedido> {
+  if (!input.items || input.items.length === 0) {
+    throw new Error('El pedido debe tener al menos un producto')
+  }
+
+  const total = input.items.reduce(
+    (sum, it) => sum + it.cantidad * it.precio_unitario,
+    0,
+  )
+
   const year = new Date().getFullYear()
   const { data: lastData } = await supabase
     .from('pedidos')
@@ -152,7 +168,7 @@ export async function createPedido(input: NewPedidoInput): Promise<Pedido> {
       fecha_entrega_estimada: input.fecha_entrega_estimada || null,
       notas:                  input.notas || null,
       estado:                 'pendiente',
-      total:                  0,
+      total:                  total,
     })
     .select('id, codigo, estado, total, notas, fecha_pedido, fecha_entrega_estimada, fecha_entrega_real, zona_id, clientes(nombre), zonas(nombre, color)')
     .single()
@@ -160,6 +176,23 @@ export async function createPedido(input: NewPedidoInput): Promise<Pedido> {
   if (error) throw new Error(error.message)
 
   const p       = data as any
+
+  // Insertar las líneas del pedido
+  const itemsRows = input.items.map(it => ({
+    pedido_id:       p.id,
+    producto_id:     it.producto_id,
+    cantidad:        it.cantidad,
+    precio_unitario: it.precio_unitario,
+    subtotal:        it.cantidad * it.precio_unitario,
+  }))
+
+  const { error: itemsError } = await supabase.from('pedido_items').insert(itemsRows)
+  if (itemsError) {
+    // Revertir el pedido creado para no dejar un pedido sin líneas
+    await supabase.from('pedidos').delete().eq('id', p.id)
+    throw new Error(`No se pudieron guardar los productos del pedido: ${itemsError.message}`)
+  }
+
   const cliente = Array.isArray(p.clientes) ? p.clientes[0] : p.clientes
   const zona    = Array.isArray(p.zonas)    ? p.zonas[0]    : p.zonas
   return {

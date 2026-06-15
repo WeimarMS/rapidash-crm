@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useT } from '../contexts/LanguageContext'
 import BuiltBy from '../components/BuiltBy'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -51,13 +52,13 @@ function useCountUp(target: number, duration = 900): number {
 
 // ─── Estado config ────────────────────────────────────────────────────────────
 
-const ESTADO: Record<EstadoPedido, { label: string; dot: string; pill: string }> = {
-  entregado:  { label: 'Entregado',  dot: '#16a34a', pill: 'bg-emerald-50 text-emerald-700' },
-  fallido:    { label: 'Fallido',    dot: '#dc2626', pill: 'bg-rose-50 text-rose-700'       },
-  cancelado:  { label: 'Cancelado',  dot: '#94a3b8', pill: 'bg-slate-100 text-slate-600'    },
-  en_ruta:    { label: 'En ruta',    dot: '#2563eb', pill: 'bg-blue-50 text-blue-700'       },
-  confirmado: { label: 'Confirmado', dot: '#d97706', pill: 'bg-amber-50 text-amber-700'     },
-  pendiente:  { label: 'Pendiente',  dot: '#cbd5e1', pill: 'bg-slate-50 text-slate-500'     },
+const ESTADO: Record<EstadoPedido, { dot: string; pill: string }> = {
+  entregado:  { dot: '#16a34a', pill: 'bg-emerald-50 text-emerald-700' },
+  fallido:    { dot: '#dc2626', pill: 'bg-rose-50 text-rose-700'       },
+  cancelado:  { dot: '#94a3b8', pill: 'bg-slate-100 text-slate-600'    },
+  en_ruta:    { dot: '#2563eb', pill: 'bg-blue-50 text-blue-700'       },
+  confirmado: { dot: '#d97706', pill: 'bg-amber-50 text-amber-700'     },
+  pendiente:  { dot: '#cbd5e1', pill: 'bg-slate-50 text-slate-500'     },
 }
 
 const ESTADO_BAR: Record<EstadoPedido, string> = {
@@ -74,11 +75,12 @@ function Skeleton({ className = '' }: { className?: string }) {
 // ─── EstadoBadge ──────────────────────────────────────────────────────────────
 
 function EstadoBadge({ estado }: { estado: EstadoPedido }) {
+  const { t } = useT()
   const cfg = ESTADO[estado] ?? ESTADO.pendiente
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.pill}`}>
       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
-      {cfg.label}
+      {t('estado.' + estado)}
     </span>
   )
 }
@@ -141,8 +143,9 @@ function EstadoBreakdown({
   selectedEstado: EstadoPedido | null
   onEstadoClick: (e: EstadoPedido) => void
 }) {
+  const { t } = useT()
   const total = data.reduce((s, d) => s + d.count, 0)
-  if (total === 0) return <p className="text-sm text-slate-400 text-center py-8">Sin datos para el filtro actual</p>
+  if (total === 0) return <p className="text-sm text-slate-400 text-center py-8">{t('dashboard.noDataFilter')}</p>
 
   return (
     <div className="space-y-4">
@@ -154,7 +157,7 @@ function EstadoBreakdown({
           return (
             <div
               key={d.estado}
-              title={`${ESTADO[d.estado]?.label}: ${d.count}`}
+              title={`${t('estado.' + d.estado)}: ${d.count}`}
               className="h-full cursor-pointer transition-all duration-200 first:rounded-l-full last:rounded-r-full"
               style={{
                 width:         `${(d.count / total) * 100}%`,
@@ -189,7 +192,7 @@ function EstadoBreakdown({
             >
               <div className="flex items-center gap-2.5">
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
-                <span className="text-sm text-slate-700 font-medium">{cfg.label}</span>
+                <span className="text-sm text-slate-700 font-medium">{t('estado.' + d.estado)}</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-24 bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -210,11 +213,12 @@ function EstadoBreakdown({
 // ─── Zonas Bar Chart (clickable) ──────────────────────────────────────────────
 
 const CustomTooltipZona = ({ active, payload }: any) => {
+  const { t } = useT()
   if (!active || !payload?.length) return null
   return (
     <div className="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg font-data">
       <p className="font-semibold">{payload[0]?.payload?.zona}</p>
-      <p className="text-slate-300">{payload[0]?.value} pedidos</p>
+      <p className="text-slate-300">{payload[0]?.value} {t('dashboard.orders')}</p>
     </div>
   )
 }
@@ -274,15 +278,16 @@ function ZonasChart({
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
-const ROL_BADGE: Record<string, { label: string; cls: string }> = {
-  admin:           { label: 'Admin',      cls: 'bg-blue-50 text-blue-700'       },
-  supervisor_zona: { label: 'Supervisor', cls: 'bg-violet-50 text-violet-700'   },
-  repartidor:      { label: 'Repartidor', cls: 'bg-orange-50 text-orange-700'   },
-  cliente:         { label: 'Cliente',    cls: 'bg-teal-50 text-teal-700'       },
-  demo:            { label: 'Demo',       cls: 'bg-emerald-50 text-emerald-700' },
+const ROL_BADGE: Record<string, { cls: string }> = {
+  admin:           { cls: 'bg-blue-50 text-blue-700'       },
+  supervisor_zona: { cls: 'bg-violet-50 text-violet-700'   },
+  repartidor:      { cls: 'bg-orange-50 text-orange-700'   },
+  cliente:         { cls: 'bg-teal-50 text-teal-700'       },
+  demo:            { cls: 'bg-emerald-50 text-emerald-700' },
 }
 
 export default function Dashboard() {
+  const { t, tZona }                        = useT()
   const { profile }                         = useAuth()
   const rolActual                           = profile?.rol ?? 'admin'
   const [raw, setRaw]                       = useState<DashboardRaw | null>(null)
@@ -347,20 +352,20 @@ export default function Dashboard() {
               className="text-xl font-extrabold tracking-tight"
               style={{ fontFamily: 'var(--font-jakarta)', color: 'var(--rd-navy)' }}
             >
-              Dashboard
+              {t('dashboard.title')}
             </h1>
             <p className="hidden md:block text-xs text-slate-400 capitalize mt-0.5">{hoy}</p>
             {/* En móvil, la firma reemplaza a la fecha en el mismo lugar */}
             <p className="md:hidden font-data text-xs text-slate-400 mt-0.5 select-none">{'// built by Weimar Miranda'}</p>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 lg:mr-24">
             <BuiltBy />
             <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Conectado
+              {t('common.connected')}
             </span>
             <span className={`inline-flex text-xs font-semibold px-3 py-1.5 rounded-full ${ROL_BADGE[rolActual]?.cls ?? 'bg-blue-50 text-blue-700'}`}>
-              {ROL_BADGE[rolActual]?.label ?? 'Admin'}
+              {t('role.' + rolActual)}
             </span>
           </div>
         </div>
@@ -368,17 +373,17 @@ export default function Dashboard() {
         {/* Active filter chips */}
         {hasFilter && (
           <div className="flex items-center gap-2 mt-3 flex-wrap">
-            <span className="text-xs font-semibold text-slate-400">Filtros activos:</span>
+            <span className="text-xs font-semibold text-slate-400">{t('common.activeFilters')}</span>
             {selectedZonaMeta && (
               <FilterChip
-                label={selectedZonaMeta.nombre}
+                label={tZona(selectedZonaMeta.nombre)}
                 color={selectedZonaMeta.color}
                 onRemove={() => setSelectedZona(null)}
               />
             )}
             {selectedEstado && (
               <FilterChip
-                label={ESTADO[selectedEstado].label}
+                label={t('estado.' + selectedEstado)}
                 color={ESTADO_BAR[selectedEstado]}
                 onRemove={() => setSelectedEstado(null)}
               />
@@ -387,7 +392,7 @@ export default function Dashboard() {
               onClick={clearFilters}
               className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors underline underline-offset-2 ml-1"
             >
-              Limpiar filtros
+              {t('common.clearFilters')}
             </button>
           </div>
         )}
@@ -409,7 +414,7 @@ export default function Dashboard() {
           ) : (
             <>
               <KPICard
-                label="Total pedidos" value={kpis.totalPedidos}
+                label={t('dashboard.kpiTotal')} value={kpis.totalPedidos}
                 accentColor="var(--rd-blue)" delay={0}
                 icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
                   <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
@@ -417,7 +422,7 @@ export default function Dashboard() {
                 </svg>}
               />
               <KPICard
-                label="Pedidos entregados" value={kpis.totalEntregados}
+                label={t('dashboard.kpiDelivered')} value={kpis.totalEntregados}
                 accentColor="var(--rd-blue)" delay={80}
                 icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
                   <polyline points="9 11 12 14 22 4"/>
@@ -425,7 +430,7 @@ export default function Dashboard() {
                 </svg>}
               />
               <KPICard
-                label="Ingresos totales" value={kpis.ingresosTotal}
+                label={t('dashboard.kpiRevenue')} value={kpis.ingresosTotal}
                 prefix="Bs." accentColor="var(--rd-green)" delay={160} isFloat
                 icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
                   <line x1="12" y1="1" x2="12" y2="23"/>
@@ -433,7 +438,7 @@ export default function Dashboard() {
                 </svg>}
               />
               <KPICard
-                label="Tasa de entrega" value={kpis.tasaEntrega}
+                label={t('dashboard.kpiDeliveryRate')} value={kpis.tasaEntrega}
                 suffix="%" accentColor="var(--rd-green)" delay={240}
                 icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
                   <polyline points="20 6 9 17 4 12"/>
@@ -452,16 +457,16 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-sm font-bold text-slate-800 tracking-tight">Pedidos por estado</h2>
+                <h2 className="text-sm font-bold text-slate-800 tracking-tight">{t('dashboard.byState')}</h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  {selectedZona ? `Zona: ${selectedZonaMeta?.nombre}` : 'Distribución acumulada'}
+                  {selectedZona ? `${t('dashboard.zonePrefix')} ${tZona(selectedZonaMeta?.nombre ?? '')}` : t('dashboard.accumulated')}
                   {' · '}
-                  <span className="text-slate-500 font-medium">Clic para filtrar</span>
+                  <span className="text-slate-500 font-medium">{t('dashboard.clickToFilter')}</span>
                 </p>
               </div>
               {raw && (
                 <span className="text-xs font-semibold text-slate-400">
-                  Total: <strong className="text-slate-700">
+                  {t('dashboard.totalLabel')} <strong className="text-slate-700">
                     {estadoBreakdownData.reduce((s, d) => s + d.count, 0)}
                   </strong>
                 </span>
@@ -486,17 +491,17 @@ export default function Dashboard() {
             style={{ animationDelay: '400ms' }}
           >
             <div className="mb-5">
-              <h2 className="text-sm font-bold text-slate-800 tracking-tight">Pedidos por zona</h2>
+              <h2 className="text-sm font-bold text-slate-800 tracking-tight">{t('dashboard.byZone')}</h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                {selectedEstado ? `Estado: ${ESTADO[selectedEstado].label}` : 'Santa Cruz de la Sierra'}
+                {selectedEstado ? `${t('dashboard.statePrefix')} ${t('estado.' + selectedEstado)}` : t('dashboard.city')}
                 {' · '}
-                <span className="text-slate-500 font-medium">Clic para filtrar</span>
+                <span className="text-slate-500 font-medium">{t('dashboard.clickToFilter')}</span>
               </p>
             </div>
             {!raw
               ? <Skeleton className="h-52" />
               : <ZonasChart
-                  data={zonaChartData}
+                  data={zonaChartData.map(z => ({ ...z, zona: tZona(z.zona) }))}
                   selectedZona={selectedZona}
                   onZonaClick={handleZonaClick}
                 />
@@ -512,14 +517,16 @@ export default function Dashboard() {
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-800 tracking-tight">
-                {hasFilter ? `Pedidos filtrados (${ultimosPedidos.length} de ${filtered.length})` : 'Últimos 10 pedidos'}
+                {hasFilter
+                  ? t('dashboard.filteredOrders').replace('{shown}', String(ultimosPedidos.length)).replace('{total}', String(filtered.length))
+                  : t('dashboard.last10')}
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                {hasFilter ? 'Resultado del filtro activo' : 'Ordenados por fecha de pedido'}
+                {hasFilter ? t('dashboard.activeFilterResult') : t('dashboard.sortedByDate')}
               </p>
             </div>
             <Link to="/pedidos" className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">
-              Ver todos →
+              {t('common.seeAll')}
             </Link>
           </div>
 
@@ -527,9 +534,9 @@ export default function Dashboard() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  {['Código', 'Cliente', 'Zona', 'Estado', 'Total', 'Fecha'].map(h => (
+                  {['common.code', 'common.client', 'common.zone', 'common.state', 'common.total', 'common.date'].map(h => (
                     <th key={h} className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      {h}
+                      {t(h)}
                     </th>
                   ))}
                 </tr>
@@ -547,10 +554,10 @@ export default function Dashboard() {
                     ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-16 text-center">
-                          <p className="text-slate-400 text-sm">Sin pedidos para el filtro actual</p>
+                          <p className="text-slate-400 text-sm">{t('dashboard.noOrdersFilter')}</p>
                           <button onClick={clearFilters}
                             className="text-xs font-semibold text-blue-600 hover:text-blue-800 mt-2 underline">
-                            Limpiar filtros
+                            {t('common.clearFilters')}
                           </button>
                         </td>
                       </tr>
@@ -572,7 +579,7 @@ export default function Dashboard() {
                         <td className="px-6 py-3.5">
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: p.zona_color }}>
                             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.zona_color }} />
-                            {p.zona_nombre}
+                            {tZona(p.zona_nombre)}
                           </span>
                         </td>
                         <td className="px-6 py-3.5">
@@ -599,10 +606,10 @@ export default function Dashboard() {
               </div>
             ) : ultimosPedidos.length === 0 ? (
               <div className="px-6 py-16 text-center">
-                <p className="text-slate-400 text-sm">Sin pedidos para el filtro actual</p>
+                <p className="text-slate-400 text-sm">{t('dashboard.noOrdersFilter')}</p>
                 <button onClick={clearFilters}
                   className="text-xs font-semibold text-blue-600 hover:text-blue-800 mt-2 underline">
-                  Limpiar filtros
+                  {t('common.clearFilters')}
                 </button>
               </div>
             ) : (
@@ -619,7 +626,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: p.zona_color }}>
                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.zona_color }} />
-                        {p.zona_nombre}
+                        {tZona(p.zona_nombre)}
                       </span>
                       <span className="text-xs text-slate-400">{fmtFecha(p.fecha_pedido)}</span>
                     </div>
@@ -632,7 +639,7 @@ export default function Dashboard() {
         </section>
 
         <footer className="text-center py-4">
-          <p className="text-xs text-slate-400">RapiDash CRM · Distribución Farmacéutica · Santa Cruz, Bolivia</p>
+          <p className="text-xs text-slate-400">{t('dashboard.footer')}</p>
         </footer>
       </main>
     </>
