@@ -211,8 +211,8 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
             onClick={() => setDrawerOpen(false)}
           />
           <aside
-            className="lg:hidden fixed inset-y-0 left-0 w-72 max-w-[85vw] z-50 flex flex-col"
-            style={{ background: '#0f172a', animation: 'slideInLeft 0.22s cubic-bezier(0.16,1,0.3,1)' }}
+            className="lg:hidden fixed top-0 left-0 h-screen w-72 max-w-[85vw] z-50 flex flex-col overscroll-contain"
+            style={{ background: '#0f172a', height: '100dvh', animation: 'slideInLeft 0.22s cubic-bezier(0.16,1,0.3,1)' }}
           >
             {/* Drawer header */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-slate-800">
@@ -232,7 +232,7 @@ export default function Sidebar({ expanded, onToggle }: { expanded: boolean; onT
             </div>
 
             {/* Drawer nav */}
-            <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+            <nav className="flex-1 overflow-y-auto overscroll-contain px-3 py-3 space-y-0.5">
               {visibleItems.map(({ labelKey, path, icon }) => (
                 <NavLink
                   key={labelKey}
