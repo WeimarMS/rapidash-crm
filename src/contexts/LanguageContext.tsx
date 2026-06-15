@@ -52,9 +52,9 @@ const ZONA_TOKENS: Record<string, TransKey> = {
 const LanguageContext = createContext<LanguageCtx | null>(null)
 
 function readInitialLang(): Lang {
-  if (typeof window === 'undefined') return 'es'
+  if (typeof window === 'undefined') return 'en'
   const stored = window.localStorage.getItem(STORAGE_KEY)
-  return stored === 'en' || stored === 'es' ? stored : 'es'
+  return stored === 'en' || stored === 'es' ? stored : 'en'
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
