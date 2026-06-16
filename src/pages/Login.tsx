@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useT } from '../contexts/LanguageContext'
 import LogoCapsula from '../components/LogoCapsula'
+import LanguageToggle from '../components/LanguageToggle'
 import { BuiltBySignature } from '../components/BuiltBy'
 
 // ─── Red de rutas de fondo (columna izquierda) ────────────────────────────────
@@ -46,32 +48,34 @@ function RutasBackground() {
 
 // ─── Highlights ───────────────────────────────────────────────────────────────
 
+// Cada highlight referencia sus claves i18n (login.h1.*); el texto se resuelve
+// con t() dentro del componente para reflejar el idioma activo.
 const HIGHLIGHTS = [
   {
-    title: 'Pedidos trazables',
-    sub: 'Códigos RD-2025-XXXX con flujo de estados completo',
+    titleKey: 'login.h1.pedidos.title',
+    subKey:   'login.h1.pedidos.sub',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4.5 h-4.5">
       <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
       <rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>
     </svg>,
   },
   {
-    title: 'Rutas por zona',
-    sub: 'Planificación diaria en las 5 zonas de Santa Cruz',
+    titleKey: 'login.h1.rutas.title',
+    subKey:   'login.h1.rutas.sub',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4.5 h-4.5">
       <path d="M3 12h18M3 6l9-3 9 3M3 18l9 3 9-3"/>
     </svg>,
   },
   {
-    title: 'Analytics en vivo',
-    sub: 'KPIs, tendencias e ingresos del negocio',
+    titleKey: 'login.h1.analytics.title',
+    subKey:   'login.h1.analytics.sub',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4.5 h-4.5">
       <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
     </svg>,
   },
   {
-    title: 'Acceso por roles',
-    sub: 'Admin, supervisores, repartidores y clientes',
+    titleKey: 'login.h1.roles.title',
+    subKey:   'login.h1.roles.sub',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4.5 h-4.5">
       <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
@@ -86,6 +90,7 @@ const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD as string | undefined
 
 export default function Login() {
   const { signIn }  = useAuth()
+  const { t }       = useT()
   const navigate    = useNavigate()
   const [usuario,   setUsuario]  = useState('')
   const [password,  setPassword] = useState('')
@@ -97,13 +102,13 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!usuario.trim() || !password) { setError('Completa todos los campos'); return }
+    if (!usuario.trim() || !password) { setError(t('login.errorFields')); return }
     setError(null); setLoading(true)
     try {
       await signIn(usuario, password)
       navigate('/', { replace: true })
     } catch {
-      setError('Usuario o contraseña incorrectos')
+      setError(t('login.errorCredentials'))
     } finally {
       setLoading(false)
     }
@@ -118,7 +123,7 @@ export default function Login() {
       await signIn(DEMO_EMAIL, DEMO_PASSWORD)
       navigate('/', { replace: true })
     } catch (e: any) {
-      setError(`No se pudo iniciar el demo: ${e?.message ?? 'error desconocido'}`)
+      setError(`${t('login.errorDemo')}: ${e?.message ?? t('login.errorUnknown')}`)
     } finally {
       setLoading(false)
     }
@@ -133,6 +138,9 @@ export default function Login() {
         .rd-node { animation: rdNode 2.8s ease-in-out infinite; }
         .rd-mono { font-family: 'DM Mono', 'Courier New', monospace; }
       `}</style>
+
+      {/* Toggle de idioma: visible antes de ingresar para elegir EN/ES */}
+      <LanguageToggle />
 
       {/* ── Columna izquierda: carátula (compacta en móvil) ── */}
       <section
@@ -164,7 +172,7 @@ export default function Login() {
                 RapiDash <span className="text-emerald-400">CRM</span>
               </h1>
               <p className="rd-mono text-emerald-300/80 text-xs lg:text-sm mt-1">
-                {'// entrega farmacéutica de última milla'}
+                {t('login.tagline')}
               </p>
             </div>
           </div>
@@ -174,15 +182,14 @@ export default function Login() {
             className="anim-card hidden lg:block text-slate-300 text-base leading-relaxed max-w-lg mt-8"
             style={{ animationDelay: '120ms' }}
           >
-            Centro de operaciones para la distribución farmacéutica en Santa Cruz de la Sierra:
-            pedidos, rutas, repartidores y análisis del negocio en un solo panel.
+            {t('login.description')}
           </p>
 
           {/* Highlights — solo desktop */}
           <div className="hidden lg:grid grid-cols-2 gap-x-8 gap-y-6 mt-10 max-w-2xl">
             {HIGHLIGHTS.map((h, i) => (
               <div
-                key={h.title}
+                key={h.titleKey}
                 className="anim-card flex items-start gap-3.5"
                 style={{ animationDelay: `${240 + i * 100}ms` }}
               >
@@ -190,8 +197,8 @@ export default function Login() {
                   {h.icon}
                 </span>
                 <div>
-                  <p className="text-sm font-bold text-white">{h.title}</p>
-                  <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{h.sub}</p>
+                  <p className="text-sm font-bold text-white">{t(h.titleKey)}</p>
+                  <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{t(h.subKey)}</p>
                 </div>
               </div>
             ))}
@@ -207,15 +214,15 @@ export default function Login() {
       {/* ── Columna derecha: login ── */}
       <section className="flex-1 lg:w-1/3 bg-white flex flex-col items-center justify-center px-6 py-10 lg:px-10 lg:py-12">
         <div className="w-full max-w-sm anim-card" style={{ animationDelay: '160ms' }}>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Iniciar sesión</h2>
-          <p className="text-sm text-slate-400 mt-1 mb-8">Accedé a tu panel de operaciones</p>
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">{t('login.title')}</h2>
+          <p className="text-sm text-slate-400 mt-1 mb-8">{t('login.subtitle')}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
 
             {/* Usuario */}
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-                Usuario o email
+                {t('login.userLabel')}
               </label>
               <input
                 type="text"
@@ -223,7 +230,7 @@ export default function Login() {
                 autoFocus
                 value={usuario}
                 onChange={e => { setUsuario(e.target.value); setError(null) }}
-                placeholder="tu.usuario o tu@email.com"
+                placeholder={t('login.userPlaceholder')}
                 className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
               />
             </div>
@@ -231,7 +238,7 @@ export default function Login() {
             {/* Contraseña */}
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-                Contraseña
+                {t('login.passwordLabel')}
               </label>
               <div className="relative">
                 <input
@@ -286,7 +293,7 @@ export default function Login() {
                   <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
                 </svg>
               )}
-              {loading ? 'Iniciando sesión…' : 'Iniciar sesión'}
+              {loading ? t('login.submitLoading') : t('login.submit')}
             </button>
 
           </form>
@@ -296,7 +303,7 @@ export default function Login() {
             <>
               <div className="flex items-center gap-3 my-6">
                 <span className="flex-1 h-px bg-slate-200" />
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">o</span>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{t('login.or')}</span>
                 <span className="flex-1 h-px bg-slate-200" />
               </div>
               <button
@@ -309,10 +316,10 @@ export default function Login() {
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                   <circle cx="12" cy="12" r="3"/>
                 </svg>
-                Entrar al Demo
+                {t('login.demoButton')}
               </button>
               <p className="text-[11px] text-slate-400 text-center mt-2">
-                Acceso de solo lectura a todo el sistema
+                {t('login.demoNote')}
               </p>
             </>
           )}

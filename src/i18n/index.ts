@@ -5,6 +5,7 @@
 // Para agregar claves de una página, editá su módulo en src/i18n/<pagina>.ts.
 
 import { core, type DictModule } from './core'
+import { login } from './login'
 import { dashboard } from './dashboard'
 import { pedidos } from './pedidos'
 import { clientes } from './clientes'
@@ -17,7 +18,7 @@ import { analytics } from './analytics'
 import { usuarios } from './usuarios'
 
 const modules: DictModule[] = [
-  core, dashboard, pedidos, clientes, productos,
+  core, login, dashboard, pedidos, clientes, productos,
   repartidores, rutas, zonas, incidencias, analytics, usuarios,
 ]
 
