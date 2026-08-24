@@ -435,14 +435,14 @@ export default function Usuarios() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
           <div className="px-6 py-3.5 border-b border-slate-100">
             <p className="text-xs font-semibold text-slate-500">
               {loading ? '…' : (users.length === 1 ? t('usuarios.count') : t('usuarios.count.plural')).replace('{count}', String(users.length))}
             </p>
           </div>
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="hidden md:block overflow-x-auto rounded-b-2xl">
+            <table className="w-full min-w-[860px] text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
                   {[
@@ -504,7 +504,7 @@ export default function Usuarios() {
                               </span>
                         }
                       </td>
-                      <td className="px-5 py-3.5 whitespace-nowrap">
+                      <td className="px-5 py-3.5 whitespace-nowrap min-w-[180px]">
                         {isSelf ? (
                           <span className="text-xs text-slate-300 italic px-3">{t('usuarios.self')}</span>
                         ) : (
