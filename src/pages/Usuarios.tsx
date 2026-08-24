@@ -330,10 +330,20 @@ export default function Usuarios() {
   const [editRol, setEditRol]   = useState<FullUser | null>(null)
   const [toast, setToast]       = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const [toggling, setToggling] = useState<string | null>(null)
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const [menuPos, setMenuPos]   = useState<{ top: number; right: number } | null>(null)
 
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg }); setTimeout(() => setToast(null), 3500)
   }
+
+  // Cierra el menú contextual al hacer click fuera
+  useEffect(() => {
+    if (!openMenu) return
+    const close = () => setOpenMenu(null)
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [openMenu])
 
   useEffect(() => {
     supabase.from('zonas').select('id, nombre').order('nombre')
@@ -369,6 +379,14 @@ export default function Usuarios() {
     setEditRol(null)
   }
 
+  const openMenuFor = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation()
+    if (openMenu === id) { setOpenMenu(null); return }
+    const rect = e.currentTarget.getBoundingClientRect()
+    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    setOpenMenu(id)
+  }
+
   const handleToggle = async (u: FullUser) => {
     setToggling(u.id)
     try {
@@ -390,6 +408,43 @@ export default function Usuarios() {
 
   return (
     <>
+      {/* Dropdown de acciones — position:fixed para escapar cualquier overflow container */}
+      {openMenu && menuPos && (() => {
+        const u = users.find(x => x.id === openMenu)
+        if (!u) return null
+        return (
+          <div
+            style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+            onClick={e => e.stopPropagation()}
+            className="bg-white rounded-xl shadow-lg border border-slate-200 py-1 min-w-[160px]"
+          >
+            <button
+              onClick={() => { setEditRol(u); setOpenMenu(null) }}
+              className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5 flex-shrink-0">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              {t('usuarios.changeRole')}
+            </button>
+            <button
+              onClick={() => { handleToggle(u); setOpenMenu(null) }}
+              disabled={toggling === u.id}
+              className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2.5 transition-colors disabled:opacity-50 ${
+                u.activo ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'
+              }`}
+            >
+              {u.activo
+                ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5 flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5 flex-shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
+              }
+              {toggling === u.id ? '…' : u.activo ? t('common.deactivate') : t('common.activate')}
+            </button>
+          </div>
+        )
+      })()}
+
       <header className="sticky top-14 lg:top-0 z-10 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>{t('usuarios.title')}</h1>
@@ -442,7 +497,7 @@ export default function Usuarios() {
             </p>
           </div>
           <div className="hidden md:block overflow-x-auto rounded-b-2xl">
-            <table className="w-full min-w-[860px] text-sm">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
                   {[
@@ -504,27 +559,19 @@ export default function Usuarios() {
                               </span>
                         }
                       </td>
-                      <td className="px-5 py-3.5 whitespace-nowrap min-w-[180px]">
+                      <td className="px-4 py-3.5 text-right">
                         {isSelf ? (
-                          <span className="text-xs text-slate-300 italic px-3">{t('usuarios.self')}</span>
+                          <span className="text-xs text-slate-300 italic">{t('usuarios.self')}</span>
                         ) : (
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => setEditRol(u)}
-                              className="text-xs font-semibold px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                            >
-                              {t('usuarios.changeRole')}
-                            </button>
-                            <button
-                              onClick={() => handleToggle(u)}
-                              disabled={toggling === u.id}
-                              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
-                                u.activo ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'
-                              }`}
-                            >
-                              {toggling === u.id ? '…' : u.activo ? t('common.deactivate') : t('common.activate')}
-                            </button>
-                          </div>
+                          <button
+                            onClick={e => openMenuFor(u.id, e)}
+                            className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                            aria-label="Acciones"
+                          >
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                              <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                            </svg>
+                          </button>
                         )}
                       </td>
                     </tr>
