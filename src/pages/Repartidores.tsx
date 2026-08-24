@@ -123,7 +123,7 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo, onEdit }: {
                 setActError(null)
                 setSaving(true)
                 try { await onToggleActivo(!rep.activo) }
-                catch (e: any) { setActError(e.message) }
+                catch (e: unknown) { setActError(e instanceof Error ? e.message : String(e)) }
                 finally { setSaving(false) }
               }}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
@@ -187,7 +187,7 @@ function NuevoRepartidorModal({ onClose, onSuccess }: {
         telefono: form.telefono, zona_id: form.zona_id, vehiculo_id: form.vehiculo_id,
       })
       onSuccess(rep)
-    } catch (e: any) { setErr(e.message) }
+    } catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)) }
     finally { setSaving(false) }
   }
 
@@ -304,7 +304,7 @@ function EditarRepartidorModal({ rep, onClose, onSuccess }: {
       })
       // Preserve pedido metrics from the original rep object
       onSuccess({ ...updated, pedidos_total: rep.pedidos_total, pedidos_entregados: rep.pedidos_entregados, tasa_entrega: rep.tasa_entrega })
-    } catch (e: any) { setErr(e.message) }
+    } catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)) }
     finally { setSaving(false) }
   }
 

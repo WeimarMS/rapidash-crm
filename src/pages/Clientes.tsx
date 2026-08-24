@@ -148,8 +148,8 @@ function Drawer({ cliente, onClose, onToggleActivo, onEdit }: {
               setSaving(true)
               try {
                 await onToggleActivo(!cliente.activo)
-              } catch (e: any) {
-                setActError(e.message)
+              } catch (e: unknown) {
+                setActError(e instanceof Error ? e.message : String(e))
               } finally {
                 setSaving(false)
               }
@@ -239,7 +239,7 @@ function EditarClienteModal({ cliente, onClose, onSuccess }: {
         telefono: form.telefono || null,
         email:    form.email    || null,
       })
-    } catch (e: any) { setErr(e.message) }
+    } catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)) }
     finally { setSaving(false) }
   }
 
@@ -326,7 +326,7 @@ function NuevoClienteModal({ onClose, onSuccess }: {
         credito_limite: form.credito_limite ? Number(form.credito_limite) : null,
       })
       onSuccess(cliente)
-    } catch (e: any) { setErr(e.message) }
+    } catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)) }
     finally { setSaving(false) }
   }
 

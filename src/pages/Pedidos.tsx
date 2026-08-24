@@ -89,8 +89,8 @@ function CambiarEstadoModal({ pedido, onClose, onSuccess }: {
     try {
       await updatePedidoEstado(pedido.id, nuevoEstado)
       onSuccess(nuevoEstado)
-    } catch (e: any) {
-      setErr(e.message)
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : String(e))
     } finally {
       setSaving(false)
     }
@@ -397,7 +397,7 @@ function EditarPedidoModal({ pedido, onClose, onSuccess }: {
         fecha_entrega_estimada: form.fecha_entrega_estimada || null,
         notas:                  form.notas                  || null,
       })
-    } catch (e: any) { setErr(e.message) }
+    } catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)) }
     finally { setSaving(false) }
   }
 
@@ -550,7 +550,7 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
         })),
       })
       onSuccess(pedido)
-    } catch (e: any) { setErr(e.message) }
+    } catch (e: unknown) { setErr(e instanceof Error ? e.message : String(e)) }
     finally { setSaving(false) }
   }
 

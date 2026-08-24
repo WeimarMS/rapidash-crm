@@ -1,5 +1,35 @@
 import { supabase } from './supabase'
 
+// Forma del JOIN que devuelve Supabase para pedidos con cliente y zona
+interface PedidoJoinRow {
+  id:                     string
+  codigo:                 string
+  estado:                 string
+  total:                  number
+  notas:                  string | null
+  fecha_pedido:           string
+  fecha_entrega_estimada: string | null
+  fecha_entrega_real:     string | null
+  zona_id:                string
+  repartidor_id:          string | null
+  clientes: { nombre: string } | { nombre: string }[] | null
+  zonas:    { nombre: string; color: string } | { nombre: string; color: string }[] | null
+}
+
+// Forma del JOIN para pedido_items con producto
+interface PedidoItemJoinRow {
+  id:              string
+  cantidad:        number
+  precio_unitario: number
+  subtotal:        number
+  productos: { nombre: string } | { nombre: string }[] | null
+}
+
+// Fila de la query de último código de pedido
+interface CodigoRow {
+  codigo: string
+}
+
 export type EstadoPedido =
   | 'pendiente' | 'confirmado' | 'en_ruta'
   | 'entregado' | 'fallido'   | 'cancelado'
@@ -37,7 +67,7 @@ export async function fetchPedidos(): Promise<Pedido[]> {
   if (error) throw new Error(error.message)
 
   const seen = new Set<string>()
-  return ((data ?? []) as any[])
+  return ((data ?? []) as PedidoJoinRow[])
     .filter(p => {
       if (seen.has(p.id)) return false
       seen.add(p.id)
@@ -104,7 +134,7 @@ export async function fetchPedidoItems(pedidoId: string): Promise<PedidoItem[]> 
 
   if (error) throw new Error(error.message)
 
-  return ((data ?? []) as any[]).map(item => {
+  return ((data ?? []) as PedidoItemJoinRow[]).map(item => {
     const prod = Array.isArray(item.productos) ? item.productos[0] : item.productos
     return {
       id:              item.id,
@@ -173,7 +203,7 @@ export async function createPedido(input: NewPedidoInput): Promise<Pedido> {
 
   let nextNum = 1
   if (lastData && lastData.length > 0) {
-    const match = (lastData[0] as any).codigo?.match(/(\d+)$/)
+    const match = (lastData[0] as CodigoRow).codigo?.match(/(\d+)$/)
     if (match) nextNum = parseInt(match[1]) + 1
   }
   const codigo = `RD-${year}-${String(nextNum).padStart(4, '0')}`
@@ -195,7 +225,7 @@ export async function createPedido(input: NewPedidoInput): Promise<Pedido> {
 
   if (error) throw new Error(error.message)
 
-  const p       = data as any
+  const p       = data as PedidoJoinRow
 
   // Insertar las líneas del pedido
   const itemsRows = input.items.map(it => ({

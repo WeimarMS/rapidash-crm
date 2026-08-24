@@ -1,5 +1,25 @@
 import { supabase } from './supabase'
 
+// Fila plana de la query de métricas de pedidos por repartidor
+interface PedidoMetricRow {
+  repartidor_id: string
+  estado:        string
+}
+
+// Forma del JOIN que devuelve Supabase para repartidores con zona y vehículo
+interface RepartidorJoinRow {
+  id:          string
+  nombre:      string
+  apellido:    string
+  ci:          string
+  telefono:    string | null
+  activo:      boolean | null
+  zona_id:     string
+  vehiculo_id: string | null
+  zonas:     { nombre: string; color: string } | { nombre: string; color: string }[] | null
+  vehiculos: { placa: string; tipo: string }   | { placa: string; tipo: string }[]   | null
+}
+
 export interface Repartidor {
   id: string
   nombre: string
@@ -38,7 +58,7 @@ export async function fetchRepartidores(): Promise<Repartidor[]> {
   if (repsRes.error) throw new Error(repsRes.error.message)
 
   const metricsMap = new Map<string, { total: number; entregados: number }>()
-  for (const p of (pedidosRes.data ?? []) as any[]) {
+  for (const p of (pedidosRes.data ?? []) as PedidoMetricRow[]) {
     if (!p.repartidor_id) continue
     const m = metricsMap.get(p.repartidor_id) ?? { total: 0, entregados: 0 }
     m.total++
@@ -46,7 +66,7 @@ export async function fetchRepartidores(): Promise<Repartidor[]> {
     metricsMap.set(p.repartidor_id, m)
   }
 
-  return ((repsRes.data ?? []) as any[]).map(r => {
+  return ((repsRes.data ?? []) as RepartidorJoinRow[]).map(r => {
     const zona = Array.isArray(r.zonas) ? r.zonas[0] : r.zonas
     const veh  = Array.isArray(r.vehiculos) ? r.vehiculos[0] : r.vehiculos
     const m    = metricsMap.get(r.id) ?? { total: 0, entregados: 0 }
@@ -115,7 +135,7 @@ export async function createRepartidor(input: NewRepartidorInput): Promise<Repar
 
   if (error) throw new Error(error.message)
 
-  const r    = data as any
+  const r    = data as RepartidorJoinRow
   const zona = Array.isArray(r.zonas)    ? r.zonas[0]    : r.zonas
   const veh  = Array.isArray(r.vehiculos) ? r.vehiculos[0] : r.vehiculos
   return {
@@ -159,7 +179,7 @@ export async function updateRepartidor(id: string, input: UpdateRepartidorInput)
 
   if (error) throw new Error(error.message)
 
-  const r    = data as any
+  const r    = data as RepartidorJoinRow
   const zona = Array.isArray(r.zonas)    ? r.zonas[0]    : r.zonas
   const veh  = Array.isArray(r.vehiculos) ? r.vehiculos[0] : r.vehiculos
   return {

@@ -1,5 +1,22 @@
 import { supabase } from './supabase'
 
+// Forma del JOIN que devuelve Supabase para clientes con su zona
+interface ClienteJoinRow {
+  id:              string
+  nombre:          string
+  tipo:            string
+  zona_id:         string
+  direccion:       string
+  telefono:        string | null
+  email:           string | null
+  contacto_nombre: string | null
+  nit:             string | null
+  credito_limite:  number | null
+  activo:          boolean | null
+  created_at:      string
+  zonas: { nombre: string; color: string } | { nombre: string; color: string }[] | null
+}
+
 export type TipoCliente = 'farmacia' | 'clinica' | 'centro_salud' | 'consultorio'
 
 export interface Cliente {
@@ -32,7 +49,7 @@ export async function fetchClientes(): Promise<Cliente[]> {
 
   if (error) throw new Error(error.message)
 
-  return ((data ?? []) as any[]).map(c => {
+  return ((data ?? []) as ClienteJoinRow[]).map(c => {
     const zona = Array.isArray(c.zonas) ? c.zonas[0] : c.zonas
     return {
       id:              c.id,
@@ -109,7 +126,7 @@ export async function createCliente(input: NewClienteInput): Promise<Cliente> {
 
   if (error) throw new Error(error.message)
 
-  const c    = data as any
+  const c    = data as ClienteJoinRow
   const zona = Array.isArray(c.zonas) ? c.zonas[0] : c.zonas
   return {
     id:              c.id,
