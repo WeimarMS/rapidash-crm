@@ -88,6 +88,10 @@ async function listUsers() {
     admin.auth.admin.listUsers({ perPage: 1000 }),
     admin.from('profiles').select('id, nombre, apellido, rol, zona_id'),
   ])
+  // TEMP DIAG — remove after root cause confirmed
+  console.error('[diag] authRes.error:', JSON.stringify(authRes.error ?? null))
+  console.error('[diag] authRes.data?.users?.length:', authRes.data?.users?.length ?? 'undefined')
+  console.error('[diag] profilesRes.error:', JSON.stringify(profilesRes.error ?? null))
   if (authRes.error) throw new Error(authRes.error.message)
 
   const profileMap = new Map<string, Record<string, unknown>>()
