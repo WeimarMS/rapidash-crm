@@ -88,7 +88,17 @@ async function listUsers() {
     admin.auth.admin.listUsers({ perPage: 1000 }),
     admin.from('profiles').select('id, nombre, apellido, rol, zona_id'),
   ])
-  if (authRes.error) throw new Error(authRes.error.message)
+  if (authRes.error) {
+    // TEMP DIAG — remove after capturing real error
+    console.error('[admin-users] listUsers authRes.error:', JSON.stringify({
+      message: authRes.error.message,
+      code:    (authRes.error as Record<string,unknown>).code,
+      details: (authRes.error as Record<string,unknown>).details,
+      status:  (authRes.error as Record<string,unknown>).status,
+    }))
+    console.error('[admin-users] profilesRes.error:', profilesRes.error ? JSON.stringify(profilesRes.error) : 'none')
+    throw new Error(authRes.error.message)
+  }
 
   const profileMap = new Map<string, Record<string, unknown>>()
   for (const p of profilesRes.data ?? []) profileMap.set((p as { id: string }).id, p as Record<string, unknown>)
