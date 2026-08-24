@@ -72,6 +72,24 @@ export interface NewClienteInput {
   credito_limite:  number | null
 }
 
+export interface UpdateClienteInput {
+  nombre:   string
+  telefono: string
+  email:    string
+}
+
+export async function updateCliente(id: string, input: UpdateClienteInput): Promise<void> {
+  const { error } = await supabase
+    .from('clientes')
+    .update({
+      nombre:   input.nombre,
+      telefono: input.telefono || null,
+      email:    input.email    || null,
+    })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
 export async function createCliente(input: NewClienteInput): Promise<Cliente> {
   const { data, error } = await supabase
     .from('clientes')

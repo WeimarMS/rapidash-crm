@@ -61,9 +61,12 @@ export const incidencias: DictModule = {
     'incidencias.drawer.resolution':  'Resolución',
     'incidencias.drawer.registered':  'Registrado',
     'incidencias.drawer.markResolved':'Marcar como resuelta',
+    'incidencias.drawer.resolving':  'Resolviendo…',
+    'incidencias.drawer.errResolve': 'No se pudo marcar como resuelta',
 
     // Toasts
     'incidencias.toast.created':    'Incidencia registrada correctamente',
+    'incidencias.toast.resolved':   'Incidencia marcada como resuelta',
   },
   en: {
     'incidencias.title':            'Incidents',
@@ -124,8 +127,11 @@ export const incidencias: DictModule = {
     'incidencias.drawer.resolution':  'Resolution',
     'incidencias.drawer.registered':  'Reported',
     'incidencias.drawer.markResolved':'Mark as resolved',
+    'incidencias.drawer.resolving':  'Resolving…',
+    'incidencias.drawer.errResolve': 'Could not mark as resolved',
 
     // Toasts
     'incidencias.toast.created':    'Incident reported successfully',
+    'incidencias.toast.resolved':   'Incident marked as resolved',
   },
 }

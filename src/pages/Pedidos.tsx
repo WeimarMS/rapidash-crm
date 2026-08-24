@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchPedidos, fetchPedidoItems, updatePedidoEstado, fetchPedidoFormOptions, createPedido, type Pedido, type EstadoPedido, type PedidoItem, type PedidoFormOptions } from '../lib/pedidos'
+import { fetchPedidos, fetchPedidoItems, updatePedidoEstado, updatePedido, fetchPedidoFormOptions, createPedido, type Pedido, type EstadoPedido, type PedidoItem, type PedidoFormOptions } from '../lib/pedidos'
 import { fetchProductos, type Producto } from '../lib/productos'
 import { useAuth } from '../contexts/AuthContext'
 import { useT } from '../contexts/LanguageContext'
@@ -154,14 +154,16 @@ function CambiarEstadoModal({ pedido, onClose, onSuccess }: {
 
 // ─── Pedido Detail Drawer ─────────────────────────────────────────────────────
 
-function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
+function PedidoDrawer({ pedido, onClose, onEstadoChanged, onPedidoUpdated }: {
   pedido: Pedido
   onClose: () => void
   onEstadoChanged: (newEstado: EstadoPedido) => void
+  onPedidoUpdated: (updated: Pedido) => void
 }) {
   const [items, setItems]               = useState<PedidoItem[]>([])
   const [loadingItems, setLoadingItems] = useState(true)
   const [showEstadoModal, setShowEstadoModal] = useState(false)
+  const [showEditModal, setShowEditModal]     = useState(false)
   const { t, tZona } = useT()
   const { profile } = useAuth()
   const readOnly = isReadOnly(profile?.rol)
@@ -291,7 +293,10 @@ function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
         {/* Footer (oculto para el rol demo) */}
         {!readOnly && (
           <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
-            <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+            >
               {t('pedidos.editOrder')}
             </button>
             <button
@@ -315,6 +320,17 @@ function PedidoDrawer({ pedido, onClose, onEstadoChanged }: {
           }}
         />
       )}
+
+      {showEditModal && (
+        <EditarPedidoModal
+          pedido={pedido}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={(updated) => {
+            onPedidoUpdated(updated)
+            setShowEditModal(false)
+          }}
+        />
+      )}
     </>
   )
 }
@@ -328,7 +344,7 @@ function SummaryCell({ label, value, accent }: { label: string; value: string; a
   )
 }
 
-// ─── Nuevo Pedido Modal ───────────────────────────────────────────────────────
+// ─── Editar Pedido Modal ──────────────────────────────────────────────────────
 
 const INP = 'w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all'
 const LBL = 'block text-xs font-semibold text-slate-500 mb-1'
@@ -338,6 +354,121 @@ const Spinner = () => (
     <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
   </svg>
 )
+
+function EditarPedidoModal({ pedido, onClose, onSuccess }: {
+  pedido: Pedido
+  onClose: () => void
+  onSuccess: (updated: Pedido) => void
+}) {
+  const { t } = useT()
+  const [opts, setOpts]       = useState<PedidoFormOptions | null>(null)
+  const [optsErr, setOptsErr] = useState<string | null>(null)
+  const [form, setForm]       = useState({
+    repartidor_id:          pedido.repartidor_id ?? '',
+    fecha_entrega_estimada: pedido.fecha_entrega_estimada?.slice(0, 10) ?? '',
+    notas:                  pedido.notas ?? '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [err, setErr]       = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchPedidoFormOptions().then(setOpts).catch(e => setOptsErr(e.message))
+  }, [])
+
+  const set = (k: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+      setForm(prev => ({ ...prev, [k]: e.target.value }))
+
+  const repartidoresZona = opts
+    ? (pedido.zona_id ? opts.repartidores.filter(r => r.zona_id === pedido.zona_id) : opts.repartidores)
+    : []
+
+  const handleSubmit = async () => {
+    setErr(null); setSaving(true)
+    try {
+      await updatePedido(pedido.id, {
+        repartidor_id:          form.repartidor_id || null,
+        fecha_entrega_estimada: form.fecha_entrega_estimada,
+        notas:                  form.notas,
+      })
+      onSuccess({
+        ...pedido,
+        repartidor_id:          form.repartidor_id          || null,
+        fecha_entrega_estimada: form.fecha_entrega_estimada || null,
+        notas:                  form.notas                  || null,
+      })
+    } catch (e: any) { setErr(e.message) }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-slate-900/50 z-50 backdrop-blur-[2px]" onClick={onClose} />
+      <div
+        className="fixed z-[60] bg-white rounded-2xl shadow-2xl border border-slate-100 w-[calc(100vw-2rem)] max-w-md p-6"
+        style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}
+      >
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">
+              {t('pedidos.editModal.eyebrow')} · <span className="font-data text-blue-700">{pedido.codigo}</span>
+            </p>
+            <h2 className="text-lg font-extrabold text-slate-900">{t('pedidos.editModal.title')}</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        {optsErr && <p className="mb-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{optsErr}</p>}
+        <div className="space-y-3">
+          <div>
+            <label className={LBL}>{t('pedidos.editModal.courier')}</label>
+            <select value={form.repartidor_id} onChange={set('repartidor_id')} className={INP}>
+              <option value="">{t('pedidos.unassigned')}</option>
+              {repartidoresZona.map(r => (
+                <option key={r.id} value={r.id}>{r.nombre} {r.apellido}</option>
+              ))}
+            </select>
+            {opts && pedido.zona_id && repartidoresZona.length === 0 && (
+              <p className="mt-1 text-[11px] text-amber-600">{t('pedidos.noCouriers')}</p>
+            )}
+          </div>
+          <div>
+            <label className={LBL}>{t('pedidos.editModal.date')}</label>
+            <input type="date" value={form.fecha_entrega_estimada} onChange={set('fecha_entrega_estimada')} className={INP} />
+          </div>
+          <div>
+            <label className={LBL}>{t('pedidos.editModal.notes')}</label>
+            <textarea
+              value={form.notas}
+              onChange={set('notas')}
+              rows={3}
+              placeholder={t('pedidos.observationsPh')}
+              className={`${INP} resize-none`}
+            />
+          </div>
+        </div>
+        {err && <p className="mt-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{err}</p>}
+        <div className="flex gap-3 mt-5">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+            {t('common.cancel')}
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving || !opts}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: '#1e40af' }}
+          >
+            {saving && <Spinner />}
+            {saving ? t('common.saving') : t('common.save')}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Nuevo Pedido Modal ───────────────────────────────────────────────────────
 
 function NuevoPedidoModal({ onClose, onSuccess }: {
   onClose: () => void
@@ -615,6 +746,12 @@ export default function Pedidos() {
     setPedidos(prev => prev.map(p => p.id === selected.id ? updated : p))
     setSelected(updated)
     showToast('success', t('pedidos.toastStateChanged').replace('{state}', t('estado.' + newEstado)))
+  }
+
+  const handlePedidoUpdated = (updated: Pedido) => {
+    setPedidos(prev => prev.map(p => p.id === updated.id ? updated : p))
+    setSelected(updated)
+    showToast('success', t('pedidos.toastUpdated').replace('{code}', updated.codigo))
   }
 
   const zonas = useMemo(() => {
@@ -906,6 +1043,7 @@ export default function Pedidos() {
           pedido={selected}
           onClose={() => setSelected(null)}
           onEstadoChanged={handleEstadoChanged}
+          onPedidoUpdated={handlePedidoUpdated}
         />
       )}
 

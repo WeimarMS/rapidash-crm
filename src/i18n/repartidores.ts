@@ -58,10 +58,20 @@ export const repartidores: DictModule = {
     'repartidores.modal.phPhone':    'Ej. 77712345',
     'repartidores.modal.required':   'Nombre, apellido, C.I., zona y vehículo son obligatorios',
 
+    // Edit modal
+    'repartidores.editModal.eyebrow': 'Repartidores',
+    'repartidores.editModal.title':   'Editar repartidor',
+    'repartidores.editModal.phone':   'Teléfono',
+    'repartidores.editModal.zone':    'Zona *',
+    'repartidores.editModal.vehicle': 'Vehículo *',
+    'repartidores.editModal.submit':  'Guardar cambios',
+    'repartidores.editModal.required':'Zona y vehículo son obligatorios',
+
     // Toasts
     'repartidores.toast.created':    'Repartidor {name} creado correctamente',
     'repartidores.toast.activated':  'Repartidor activado correctamente',
     'repartidores.toast.deactivated':'Repartidor desactivado correctamente',
+    'repartidores.toast.updated':    'Repartidor {name} actualizado correctamente',
   },
   en: {
     'repartidores.title':            'Couriers',
@@ -119,9 +129,19 @@ export const repartidores: DictModule = {
     'repartidores.modal.phPhone':    'e.g. 77712345',
     'repartidores.modal.required':   'First name, last name, ID, zone and vehicle are required',
 
+    // Edit modal
+    'repartidores.editModal.eyebrow': 'Couriers',
+    'repartidores.editModal.title':   'Edit courier',
+    'repartidores.editModal.phone':   'Phone',
+    'repartidores.editModal.zone':    'Zone *',
+    'repartidores.editModal.vehicle': 'Vehicle *',
+    'repartidores.editModal.submit':  'Save changes',
+    'repartidores.editModal.required':'Zone and vehicle are required',
+
     // Toasts
     'repartidores.toast.created':    'Courier {name} created successfully',
     'repartidores.toast.activated':  'Courier activated successfully',
     'repartidores.toast.deactivated':'Courier deactivated successfully',
+    'repartidores.toast.updated':    'Courier {name} updated successfully',
   },
 }

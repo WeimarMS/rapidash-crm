@@ -46,8 +46,15 @@ export const productos: DictModule = {
     'productos.reqError':         'Nombre y unidad son obligatorios',
     'productos.priceError':       'El precio debe ser mayor a 0',
 
+    // Modal editar
+    'productos.editModal.eyebrow': 'Productos',
+    'productos.editModal.title':   'Editar producto',
+    'productos.editModal.errName': 'El nombre es obligatorio',
+    'productos.editModal.errPrice':'El precio debe ser mayor a 0',
+
     // Toasts
     'productos.toastCreated':     'Producto "{name}" creado correctamente',
+    'productos.toastUpdated':     'Producto "{name}" actualizado correctamente',
   },
   en: {
     'productos.title':            'Products',
@@ -93,7 +100,14 @@ export const productos: DictModule = {
     'productos.reqError':         'Name and unit are required',
     'productos.priceError':       'Price must be greater than 0',
 
+    // Edit modal
+    'productos.editModal.eyebrow': 'Products',
+    'productos.editModal.title':   'Edit product',
+    'productos.editModal.errName': 'Name is required',
+    'productos.editModal.errPrice':'Price must be greater than 0',
+
     // Toasts
     'productos.toastCreated':     'Product "{name}" created successfully',
+    'productos.toastUpdated':     'Product "{name}" updated successfully',
   },
 }

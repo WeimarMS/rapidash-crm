@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchIncidencias, createIncidencia, type Incidencia } from '../lib/incidencias'
+import { fetchIncidencias, createIncidencia, resolveIncidencia, type Incidencia } from '../lib/incidencias'
 import { fetchPedidosSelector } from '../lib/pedidos'
 import { useAuth } from '../contexts/AuthContext'
 import { useT } from '../contexts/LanguageContext'
@@ -180,10 +180,30 @@ export default function Incidencias() {
   const { t } = useT()
   const readOnly = isReadOnly(profile?.rol)
   const [toast, setToast]                 = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
+  const [resolving, setResolving]         = useState(false)
+  const [resolveErr, setResolveErr]       = useState<string | null>(null)
 
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg })
     setTimeout(() => setToast(null), 3500)
+  }
+
+  const handleResolve = async () => {
+    if (!selected || resolving) return
+    setResolveErr(null)
+    setResolving(true)
+    try {
+      await resolveIncidencia(selected.id)
+      setIncidencias(prev =>
+        prev.map(i => i.id === selected.id ? { ...i, estado: 'resuelta' } : i)
+      )
+      setSelected(null)
+      showToast('success', t('incidencias.toast.resolved'))
+    } catch {
+      setResolveErr(t('incidencias.drawer.errResolve'))
+    } finally {
+      setResolving(false)
+    }
   }
 
   const loadIncidencias = () => {
@@ -194,6 +214,8 @@ export default function Incidencias() {
   }
 
   useEffect(() => { loadIncidencias() }, [])
+
+  const openDrawer = (inc: Incidencia) => { setSelected(inc); setResolveErr(null) }
 
   const filtered = useMemo(() => incidencias.filter(i => {
     const q = search.toLowerCase()
@@ -281,7 +303,7 @@ export default function Incidencias() {
                   )) : filtered.length===0 ? (
                     <tr><td colSpan={7} className="px-6 py-16 text-center text-slate-400 text-sm">{t('common.noResults')}</td></tr>
                   ) : filtered.map((inc, i) => (
-                    <tr key={inc.id} className="border-b border-slate-50 hover:bg-rose-50/20 transition-colors cursor-pointer anim-card" style={{animationDelay:`${i*30}ms`}} onClick={()=>setSelected(inc)}>
+                    <tr key={inc.id} className="border-b border-slate-50 hover:bg-rose-50/20 transition-colors cursor-pointer anim-card" style={{animationDelay:`${i*30}ms`}} onClick={()=>openDrawer(inc)}>
                       <td className="px-6 py-3.5">
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">{t('incidencias.tipo.'+inc.tipo)}</span>
                       </td>
@@ -298,7 +320,7 @@ export default function Incidencias() {
                       </td>
                       <td className="px-6 py-3.5">
                         <button className="text-xs font-semibold text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
-                          onClick={e=>{e.stopPropagation();setSelected(inc)}}>{t('common.view')}</button>
+                          onClick={e=>{e.stopPropagation();openDrawer(inc)}}>{t('common.view')}</button>
                       </td>
                     </tr>
                   ))}
@@ -328,7 +350,7 @@ export default function Incidencias() {
                 {filtered.map(inc => (
                   <button
                     key={inc.id}
-                    onClick={() => setSelected(inc)}
+                    onClick={() => openDrawer(inc)}
                     className="w-full text-left px-4 py-3.5 hover:bg-rose-50/20 active:bg-rose-50/40 transition-colors space-y-2"
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -402,10 +424,21 @@ export default function Incidencias() {
               {selected.resolucion && <InfoBlock label={t('incidencias.drawer.resolution')} value={selected.resolucion} />}
               <InfoBlock label={t('incidencias.drawer.registered')} value={new Date(selected.created_at).toLocaleDateString('es-BO',{day:'numeric',month:'long',year:'numeric'})} />
             </div>
-            <div className="px-6 py-4 border-t border-slate-100">
-              <button className="w-full py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
-                {t('incidencias.drawer.markResolved')}
-              </button>
+            <div className="px-6 py-4 border-t border-slate-100 space-y-2">
+              {resolveErr && (
+                <p className="text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl">
+                  {resolveErr}
+                </p>
+              )}
+              {selected.estado !== 'resuelta' && !readOnly && (
+                <button
+                  onClick={handleResolve}
+                  disabled={resolving}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {resolving ? t('incidencias.drawer.resolving') : t('incidencias.drawer.markResolved')}
+                </button>
+              )}
             </div>
           </aside>
         </>

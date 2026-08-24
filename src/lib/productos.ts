@@ -41,6 +41,28 @@ export async function fetchProductos(): Promise<Producto[]> {
 
 // ─── Form helpers ─────────────────────────────────────────────────────────────
 
+export interface UpdateProductoInput {
+  nombre:          string
+  descripcion:     string
+  categoria:       CategoriaProducto
+  unidad:          string
+  precio_unitario: number
+}
+
+export async function updateProducto(id: string, input: UpdateProductoInput): Promise<void> {
+  const { error } = await supabase
+    .from('productos')
+    .update({
+      nombre:          input.nombre,
+      descripcion:     input.descripcion || null,
+      categoria:       input.categoria,
+      unidad:          input.unidad,
+      precio_unitario: input.precio_unitario,
+    })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
 export interface NewProductoInput {
   nombre:          string
   descripcion:     string

@@ -25,6 +25,14 @@ export async function createIncidencia(data: {
   if (error) throw new Error(error.message)
 }
 
+export async function resolveIncidencia(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('incidencias')
+    .update({ estado: 'resuelta' })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
 export async function fetchIncidencias(): Promise<Incidencia[]> {
   const { data, error } = await supabase
     .from('incidencias')

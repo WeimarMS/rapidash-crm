@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchProductos, createProducto, type Producto, type CategoriaProducto, type NewProductoInput } from '../lib/productos'
+import { fetchProductos, createProducto, updateProducto, type Producto, type CategoriaProducto, type NewProductoInput, type UpdateProductoInput } from '../lib/productos'
 import { useAuth } from '../contexts/AuthContext'
 import { isReadOnly } from '../lib/permissions'
 import { useT } from '../contexts/LanguageContext'
@@ -152,6 +152,119 @@ function NuevoProductoModal({ onClose, onSuccess }: {
   )
 }
 
+// ─── Editar Producto Modal ────────────────────────────────────────────────────
+
+function EditarProductoModal({ producto, onClose, onSuccess }: {
+  producto: Producto
+  onClose: () => void
+  onSuccess: (updated: Producto) => void
+}) {
+  const { t } = useT()
+  const [form, setForm] = useState<UpdateProductoInput>({
+    nombre:          producto.nombre,
+    descripcion:     producto.descripcion ?? '',
+    categoria:       producto.categoria,
+    unidad:          producto.unidad,
+    precio_unitario: producto.precio_unitario,
+  })
+  const [saving, setSaving] = useState(false)
+  const [err, setErr]       = useState<string | null>(null)
+
+  const set = (k: keyof UpdateProductoInput) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+      setForm(prev => ({ ...prev, [k]: e.target.value }))
+
+  const handleSubmit = async () => {
+    if (!form.nombre.trim()) { setErr(t('productos.editModal.errName')); return }
+    if (Number(form.precio_unitario) <= 0) { setErr(t('productos.editModal.errPrice')); return }
+    setErr(null); setSaving(true)
+    try {
+      const input: UpdateProductoInput = {
+        ...form,
+        nombre:          form.nombre.trim(),
+        precio_unitario: Number(form.precio_unitario),
+      }
+      await updateProducto(producto.id, input)
+      onSuccess({
+        ...producto,
+        ...input,
+        descripcion: input.descripcion || null,
+        cadena_frio: input.categoria === 'vacuna',
+      })
+    } catch (e: any) { setErr(e.message) }
+    finally { setSaving(false) }
+  }
+
+  const esFrio = form.categoria === 'vacuna'
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-slate-900/50 z-50 backdrop-blur-[2px]" onClick={onClose} />
+      <div
+        className="fixed z-[60] bg-white rounded-2xl shadow-2xl border border-slate-100 w-[calc(100vw-2rem)] max-w-lg p-6 max-h-[90vh] overflow-y-auto"
+        style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}
+      >
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">{t('productos.editModal.eyebrow')}</p>
+            <h2 className="text-lg font-extrabold text-slate-900">{t('productos.editModal.title')}</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className={LBL}>{t('productos.fieldName')}</label>
+            <input type="text" value={form.nombre} onChange={set('nombre')} className={INP} />
+          </div>
+          <div>
+            <label className={LBL}>{t('productos.fieldDescription')}</label>
+            <textarea value={form.descripcion} onChange={set('descripcion')} rows={2}
+              className={`${INP} resize-none`} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={LBL}>{t('productos.fieldCategory')}</label>
+              <select value={form.categoria} onChange={set('categoria')} className={INP}>
+                {CATEGORIAS.map(c => <option key={c} value={c}>{t('categoria.' + c)}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={LBL}>{t('productos.fieldUnit')}</label>
+              <select value={form.unidad} onChange={set('unidad')} className={INP}>
+                {UNIDADES.map(u => <option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className={LBL}>{t('productos.fieldPrice')}</label>
+            <input type="number" min="0" step="0.01" value={form.precio_unitario || ''} onChange={set('precio_unitario')} placeholder="0.00" className={INP} />
+          </div>
+          {esFrio && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-cyan-50 border border-cyan-200 rounded-xl">
+              <span className="text-sm">❄</span>
+              <span className="text-xs font-semibold text-cyan-700">{t('productos.coldNote')}</span>
+            </div>
+          )}
+        </div>
+        {err && <p className="mt-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{err}</p>}
+        <div className="flex gap-3 mt-5">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+            {t('common.cancel')}
+          </button>
+          <button onClick={handleSubmit} disabled={saving}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: '#1e40af' }}>
+            {saving && <Spinner />}
+            {saving ? t('common.saving') : t('common.save')}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
 export default function Productos() {
   const [productos, setProductos] = useState<Producto[]>([])
   const [loading, setLoading]     = useState(true)
@@ -161,6 +274,7 @@ export default function Productos() {
   const [soloAlerta, setSoloAlerta] = useState(false)
   const [toast, setToast]           = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const [showNuevo, setShowNuevo]   = useState(false)
+  const [editando, setEditando]     = useState<Producto | null>(null)
   const { profile } = useAuth()
   const { t, lang } = useT()
   const readOnly = isReadOnly(profile?.rol)
@@ -173,6 +287,12 @@ export default function Productos() {
     setProductos(prev => [...prev, p].sort((a, b) => a.nombre.localeCompare(b.nombre)))
     showToast('success', t('productos.toastCreated').replace('{name}', p.nombre))
     setShowNuevo(false)
+  }
+
+  const handleEditarProducto = (updated: Producto) => {
+    setProductos(prev => prev.map(p => p.id === updated.id ? updated : p))
+    showToast('success', t('productos.toastUpdated').replace('{name}', updated.nombre))
+    setEditando(null)
   }
 
   useEffect(() => {
@@ -314,7 +434,7 @@ export default function Productos() {
                       </td>
                       <td className="px-6 py-3.5">
                         {!readOnly && (
-                          <button className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-blue-50">{t('common.edit')}</button>
+                          <button onClick={() => setEditando(p)} className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-blue-50">{t('common.edit')}</button>
                         )}
                       </td>
                     </tr>
@@ -384,6 +504,10 @@ export default function Productos() {
 
       {showNuevo && (
         <NuevoProductoModal onClose={() => setShowNuevo(false)} onSuccess={handleNuevoProducto} />
+      )}
+
+      {editando && (
+        <EditarProductoModal producto={editando} onClose={() => setEditando(null)} onSuccess={handleEditarProducto} />
       )}
 
       {toast && (

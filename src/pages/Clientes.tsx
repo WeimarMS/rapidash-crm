@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchClientes, toggleClienteActivo, fetchZonasSimple, createCliente, type Cliente, type TipoCliente, type NewClienteInput } from '../lib/clientes'
+import { fetchClientes, toggleClienteActivo, fetchZonasSimple, createCliente, updateCliente, type Cliente, type TipoCliente, type NewClienteInput } from '../lib/clientes'
 import { useAuth } from '../contexts/AuthContext'
 import { isReadOnly } from '../lib/permissions'
 import { useT } from '../contexts/LanguageContext'
@@ -50,10 +50,11 @@ function Skeleton({ className = '', style }: { className?: string; style?: React
 
 // ─── Detail Drawer ────────────────────────────────────────────────────────────
 
-function Drawer({ cliente, onClose, onToggleActivo }: {
+function Drawer({ cliente, onClose, onToggleActivo, onEdit }: {
   cliente: Cliente
   onClose: () => void
   onToggleActivo: (newActivo: boolean) => Promise<void>
+  onEdit: () => void
 }) {
   const [saving, setSaving]   = useState(false)
   const [actError, setActError] = useState<string | null>(null)
@@ -134,7 +135,10 @@ function Drawer({ cliente, onClose, onToggleActivo }: {
         )}
         {!readOnly && (
         <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
-          <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+          <button
+            onClick={onEdit}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+          >
             {t('common.edit')}
           </button>
           <button
@@ -199,6 +203,95 @@ const Spinner = () => (
     <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
   </svg>
 )
+
+// ─── Editar Cliente Modal ─────────────────────────────────────────────────────
+
+function EditarClienteModal({ cliente, onClose, onSuccess }: {
+  cliente: Cliente
+  onClose: () => void
+  onSuccess: (updated: Cliente) => void
+}) {
+  const { t } = useT()
+  const [form, setForm] = useState({
+    nombre:   cliente.nombre,
+    telefono: cliente.telefono  ?? '',
+    email:    cliente.email     ?? '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [err, setErr]       = useState<string | null>(null)
+
+  const set = (k: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm(prev => ({ ...prev, [k]: e.target.value }))
+
+  const handleSubmit = async () => {
+    if (!form.nombre.trim()) { setErr(t('clientes.editModal.errName')); return }
+    setErr(null); setSaving(true)
+    try {
+      await updateCliente(cliente.id, {
+        nombre:   form.nombre.trim(),
+        telefono: form.telefono,
+        email:    form.email,
+      })
+      onSuccess({
+        ...cliente,
+        nombre:   form.nombre.trim(),
+        telefono: form.telefono || null,
+        email:    form.email    || null,
+      })
+    } catch (e: any) { setErr(e.message) }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-slate-900/50 z-50 backdrop-blur-[2px]" onClick={onClose} />
+      <div
+        className="fixed z-[60] bg-white rounded-2xl shadow-2xl border border-slate-100 w-[calc(100vw-2rem)] max-w-md p-6"
+        style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}
+      >
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">{t('clientes.editModal.eyebrow')}</p>
+            <h2 className="text-lg font-extrabold text-slate-900">{t('clientes.editModal.title')}</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className={LBL}>{t('clientes.editModal.name')}</label>
+            <input type="text" value={form.nombre} onChange={set('nombre')} className={INP} />
+          </div>
+          <div>
+            <label className={LBL}>{t('clientes.editModal.phone')}</label>
+            <input type="tel" value={form.telefono} onChange={set('telefono')} className={INP} />
+          </div>
+          <div>
+            <label className={LBL}>{t('clientes.editModal.email')}</label>
+            <input type="email" value={form.email} onChange={set('email')} className={INP} />
+          </div>
+        </div>
+        {err && <p className="mt-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{err}</p>}
+        <div className="flex gap-3 mt-5">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+            {t('common.cancel')}
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: '#1e40af' }}
+          >
+            {saving && <Spinner />}
+            {saving ? t('common.saving') : t('common.save')}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
 
 function NuevoClienteModal({ onClose, onSuccess }: {
   onClose: () => void
@@ -331,6 +424,7 @@ export default function Clientes() {
   const [selected, setSelected]       = useState<Cliente | null>(null)
   const [toast, setToast]             = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const [showNuevo, setShowNuevo]     = useState(false)
+  const [showEditar, setShowEditar]   = useState(false)
   const { profile } = useAuth()
   const { t, lang, tZona } = useT()
   const readOnly = isReadOnly(profile?.rol)
@@ -344,6 +438,13 @@ export default function Clientes() {
     setClientes(prev => [c, ...prev])
     showToast('success', t('clientes.toastCreated').replace('{name}', c.nombre))
     setShowNuevo(false)
+  }
+
+  const handleEditarCliente = (updated: Cliente) => {
+    setClientes(prev => prev.map(c => c.id === updated.id ? updated : c))
+    setSelected(updated)
+    setShowEditar(false)
+    showToast('success', t('clientes.toast.updated').replace('{name}', updated.nombre))
   }
 
   useEffect(() => {
@@ -653,6 +754,15 @@ export default function Clientes() {
           cliente={selected}
           onClose={() => setSelected(null)}
           onToggleActivo={handleToggleActivo}
+          onEdit={() => setShowEditar(true)}
+        />
+      )}
+
+      {showEditar && selected && (
+        <EditarClienteModal
+          cliente={selected}
+          onClose={() => setShowEditar(false)}
+          onSuccess={handleEditarCliente}
         />
       )}
 

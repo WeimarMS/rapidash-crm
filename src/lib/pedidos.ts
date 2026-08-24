@@ -19,6 +19,7 @@ export interface Pedido {
   zona_id: string
   zona_nombre: string
   zona_color: string
+  repartidor_id: string | null
   estado: EstadoPedido
   total: number
   notas: string | null
@@ -30,7 +31,7 @@ export interface Pedido {
 export async function fetchPedidos(): Promise<Pedido[]> {
   const { data, error } = await supabase
     .from('pedidos')
-    .select('id, codigo, estado, total, notas, fecha_pedido, fecha_entrega_estimada, fecha_entrega_real, zona_id, clientes(nombre), zonas(nombre, color)')
+    .select('id, codigo, estado, total, notas, fecha_pedido, fecha_entrega_estimada, fecha_entrega_real, zona_id, repartidor_id, clientes(nombre), zonas(nombre, color)')
     .order('fecha_pedido', { ascending: false })
 
   if (error) throw new Error(error.message)
@@ -52,6 +53,7 @@ export async function fetchPedidos(): Promise<Pedido[]> {
         zona_id:                p.zona_id,
         zona_nombre:            zona?.nombre    ?? '—',
         zona_color:             zona?.color     ?? '#94a3b8',
+        repartidor_id:          p.repartidor_id ?? null,
         estado:                 p.estado as EstadoPedido,
         total:                  p.total ?? 0,
         notas:                  p.notas,
@@ -64,6 +66,24 @@ export async function fetchPedidos(): Promise<Pedido[]> {
 
 export async function updatePedidoEstado(id: string, estado: EstadoPedido): Promise<void> {
   const { error } = await supabase.from('pedidos').update({ estado }).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export interface UpdatePedidoInput {
+  repartidor_id:          string | null
+  fecha_entrega_estimada: string
+  notas:                  string
+}
+
+export async function updatePedido(id: string, input: UpdatePedidoInput): Promise<void> {
+  const { error } = await supabase
+    .from('pedidos')
+    .update({
+      repartidor_id:          input.repartidor_id          || null,
+      fecha_entrega_estimada: input.fecha_entrega_estimada || null,
+      notas:                  input.notas                  || null,
+    })
+    .eq('id', id)
   if (error) throw new Error(error.message)
 }
 
@@ -170,7 +190,7 @@ export async function createPedido(input: NewPedidoInput): Promise<Pedido> {
       estado:                 'pendiente',
       total:                  total,
     })
-    .select('id, codigo, estado, total, notas, fecha_pedido, fecha_entrega_estimada, fecha_entrega_real, zona_id, clientes(nombre), zonas(nombre, color)')
+    .select('id, codigo, estado, total, notas, fecha_pedido, fecha_entrega_estimada, fecha_entrega_real, zona_id, repartidor_id, clientes(nombre), zonas(nombre, color)')
     .single()
 
   if (error) throw new Error(error.message)
@@ -183,7 +203,7 @@ export async function createPedido(input: NewPedidoInput): Promise<Pedido> {
     producto_id:     it.producto_id,
     cantidad:        it.cantidad,
     precio_unitario: it.precio_unitario,
-    subtotal:        it.cantidad * it.precio_unitario,
+    // subtotal is GENERATED ALWAYS AS (cantidad * precio_unitario) in Postgres — omit it
   }))
 
   const { error: itemsError } = await supabase.from('pedido_items').insert(itemsRows)
@@ -202,6 +222,7 @@ export async function createPedido(input: NewPedidoInput): Promise<Pedido> {
     zona_id:                p.zona_id,
     zona_nombre:            zona?.nombre    ?? '—',
     zona_color:             zona?.color     ?? '#94a3b8',
+    repartidor_id:          p.repartidor_id ?? input.repartidor_id ?? null,
     estado:                 p.estado        as EstadoPedido,
     total:                  p.total         ?? 0,
     notas:                  p.notas,

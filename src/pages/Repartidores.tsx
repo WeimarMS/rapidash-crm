@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchRepartidores, toggleRepartidorActivo, fetchRepartidorFormOptions, createRepartidor, type Repartidor, type RepartidorFormOptions } from '../lib/repartidores'
+import { fetchRepartidores, toggleRepartidorActivo, fetchRepartidorFormOptions, createRepartidor, updateRepartidor, type Repartidor, type RepartidorFormOptions } from '../lib/repartidores'
 import { useAuth } from '../contexts/AuthContext'
 import { useT } from '../contexts/LanguageContext'
 import { isReadOnly } from '../lib/permissions'
@@ -21,10 +21,11 @@ function FilterPill({ active, onClick, color, children }: { active: boolean; onC
   )
 }
 
-function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
+function RepartidorDrawer({ rep, onClose, onToggleActivo, onEdit }: {
   rep: Repartidor
   onClose: () => void
   onToggleActivo: (newActivo: boolean) => Promise<void>
+  onEdit: () => void
 }) {
   const [saving, setSaving]     = useState(false)
   const [actError, setActError] = useState<string | null>(null)
@@ -115,7 +116,7 @@ function RepartidorDrawer({ rep, onClose, onToggleActivo }: {
         )}
         {!readOnly && (
           <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
-            <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">{t('common.edit')}</button>
+            <button onClick={onEdit} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">{t('common.edit')}</button>
             <button
               disabled={saving}
               onClick={async () => {
@@ -264,6 +265,106 @@ function NuevoRepartidorModal({ onClose, onSuccess }: {
   )
 }
 
+// ─── Editar Repartidor Modal ──────────────────────────────────────────────────
+
+function EditarRepartidorModal({ rep, onClose, onSuccess }: {
+  rep: Repartidor
+  onClose: () => void
+  onSuccess: (updated: Repartidor) => void
+}) {
+  const [opts, setOpts]       = useState<RepartidorFormOptions | null>(null)
+  const [optsErr, setOptsErr] = useState<string | null>(null)
+  const [form, setForm]       = useState({
+    telefono:    rep.telefono ?? '',
+    zona_id:     rep.zona_id,
+    vehiculo_id: rep.vehiculo_id,
+  })
+  const [saving, setSaving] = useState(false)
+  const [err, setErr]       = useState<string | null>(null)
+  const { t, tZona } = useT()
+
+  useEffect(() => {
+    fetchRepartidorFormOptions().then(setOpts).catch(e => setOptsErr(e.message))
+  }, [])
+
+  const set = (k: string) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setForm(prev => ({ ...prev, [k]: e.target.value }))
+
+  const handleSubmit = async () => {
+    if (!form.zona_id || !form.vehiculo_id) {
+      setErr(t('repartidores.editModal.required')); return
+    }
+    setErr(null); setSaving(true)
+    try {
+      const updated = await updateRepartidor(rep.id, {
+        telefono:    form.telefono,
+        zona_id:     form.zona_id,
+        vehiculo_id: form.vehiculo_id,
+      })
+      // Preserve pedido metrics from the original rep object
+      onSuccess({ ...updated, pedidos_total: rep.pedidos_total, pedidos_entregados: rep.pedidos_entregados, tasa_entrega: rep.tasa_entrega })
+    } catch (e: any) { setErr(e.message) }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-slate-900/50 z-50 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="fixed z-[60] bg-white rounded-2xl shadow-2xl border border-slate-100 w-[calc(100vw-2rem)] max-w-md p-6 max-h-[90vh] overflow-y-auto"
+        style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', animation: 'fadeSlideUp 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">{t('repartidores.editModal.eyebrow')}</p>
+            <h2 className="text-lg font-extrabold text-slate-900">{t('repartidores.editModal.title')}</h2>
+            <p className="text-sm text-slate-500 mt-0.5">{rep.nombre} {rep.apellido}</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        {optsErr && <p className="mb-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{optsErr}</p>}
+        <div className="space-y-3">
+          <div>
+            <label className={LBL}>{t('repartidores.editModal.phone')}</label>
+            <input type="tel" value={form.telefono} onChange={set('telefono')} placeholder="Ej. 77712345" className={INP} />
+          </div>
+          <div>
+            <label className={LBL}>{t('repartidores.editModal.zone')}</label>
+            <select value={form.zona_id} onChange={set('zona_id')} className={INP}>
+              <option value="">{t('common.select')}</option>
+              {opts?.zonas.map(z => <option key={z.id} value={z.id}>{tZona(z.nombre)}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={LBL}>{t('repartidores.editModal.vehicle')}</label>
+            <select value={form.vehiculo_id} onChange={set('vehiculo_id')} className={INP}>
+              <option value="">{t('common.select')}</option>
+              {opts?.vehiculos.map(v => (
+                <option key={v.id} value={v.id}>
+                  {VEHICULO_ICON[v.tipo] ?? '🚚'} {v.placa} ({v.tipo})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        {err && <p className="mt-3 text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{err}</p>}
+        <div className="flex gap-3 mt-5">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+            {t('common.cancel')}
+          </button>
+          <button onClick={handleSubmit} disabled={saving || !opts}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: '#1e40af' }}>
+            {saving && <Spinner />}
+            {saving ? t('common.saving') : t('repartidores.editModal.submit')}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
 export default function Repartidores() {
   const [repartidores, setRepartidores] = useState<Repartidor[]>([])
   const [loading, setLoading]           = useState(true)
@@ -273,6 +374,7 @@ export default function Repartidores() {
   const [selected, setSelected]         = useState<Repartidor | null>(null)
   const [toast, setToast]               = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const [showNuevo, setShowNuevo]       = useState(false)
+  const [showEditar, setShowEditar]     = useState(false)
   const { profile } = useAuth()
   const { t, tZona } = useT()
   const readOnly = isReadOnly(profile?.rol)
@@ -280,6 +382,13 @@ export default function Repartidores() {
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg })
     setTimeout(() => setToast(null), 3500)
+  }
+
+  const handleEditarRepartidor = (updated: Repartidor) => {
+    setRepartidores(prev => prev.map(r => r.id === updated.id ? updated : r))
+    setShowEditar(false)
+    setSelected(null)
+    showToast('success', t('repartidores.toast.updated').replace('{name}', `${updated.nombre} ${updated.apellido}`))
   }
 
   const handleNuevoRepartidor = (r: Repartidor) => {
@@ -491,6 +600,15 @@ export default function Repartidores() {
           rep={selected}
           onClose={() => setSelected(null)}
           onToggleActivo={handleToggleActivo}
+          onEdit={() => setShowEditar(true)}
+        />
+      )}
+
+      {showEditar && selected && (
+        <EditarRepartidorModal
+          rep={selected}
+          onClose={() => setShowEditar(false)}
+          onSuccess={handleEditarRepartidor}
         />
       )}
 

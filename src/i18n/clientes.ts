@@ -57,10 +57,19 @@ export const clientes: DictModule = {
     'clientes.create':           'Crear cliente',
     'clientes.reqError':         'Nombre, zona y dirección son obligatorios',
 
+    // Edit modal
+    'clientes.editModal.title':   'Editar cliente',
+    'clientes.editModal.eyebrow': 'Clientes',
+    'clientes.editModal.name':    'Nombre *',
+    'clientes.editModal.phone':   'Teléfono',
+    'clientes.editModal.email':   'Correo',
+    'clientes.editModal.errName': 'El nombre es obligatorio',
+
     // Toasts
     'clientes.toastCreated':     'Cliente "{name}" creado correctamente',
     'clientes.toastActivated':   'Cliente activado correctamente',
     'clientes.toastSuspended':   'Cliente suspendido correctamente',
+    'clientes.toast.updated':    'Cliente "{name}" actualizado correctamente',
   },
   en: {
     'clientes.title':            'Clients',
@@ -117,9 +126,18 @@ export const clientes: DictModule = {
     'clientes.create':           'Create client',
     'clientes.reqError':         'Name, zone and address are required',
 
+    // Edit modal
+    'clientes.editModal.title':   'Edit client',
+    'clientes.editModal.eyebrow': 'Clients',
+    'clientes.editModal.name':    'Name *',
+    'clientes.editModal.phone':   'Phone',
+    'clientes.editModal.email':   'Email',
+    'clientes.editModal.errName': 'Name is required',
+
     // Toasts
     'clientes.toastCreated':     'Client "{name}" created successfully',
     'clientes.toastActivated':   'Client activated successfully',
     'clientes.toastSuspended':   'Client suspended successfully',
+    'clientes.toast.updated':    'Client "{name}" updated successfully',
   },
 }

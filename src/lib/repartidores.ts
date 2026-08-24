@@ -9,6 +9,7 @@ export interface Repartidor {
   zona_id: string
   zona_nombre: string
   zona_color: string
+  vehiculo_id: string
   vehiculo_placa: string
   vehiculo_tipo: string
   activo: boolean
@@ -58,6 +59,7 @@ export async function fetchRepartidores(): Promise<Repartidor[]> {
       zona_id:            r.zona_id,
       zona_nombre:        zona?.nombre ?? '—',
       zona_color:         zona?.color  ?? '#94a3b8',
+      vehiculo_id:        r.vehiculo_id ?? '',
       vehiculo_placa:     veh?.placa   ?? '—',
       vehiculo_tipo:      veh?.tipo    ?? '—',
       activo:             r.activo ?? true,
@@ -125,6 +127,51 @@ export async function createRepartidor(input: NewRepartidorInput): Promise<Repar
     zona_id:            r.zona_id,
     zona_nombre:        zona?.nombre ?? '—',
     zona_color:         zona?.color  ?? '#94a3b8',
+    vehiculo_id:        r.vehiculo_id ?? '',
+    vehiculo_placa:     veh?.placa   ?? '—',
+    vehiculo_tipo:      veh?.tipo    ?? '—',
+    activo:             r.activo     ?? true,
+    pedidos_total:      0,
+    pedidos_entregados: 0,
+    tasa_entrega:       0,
+  }
+}
+
+// ─── Update Repartidor ────────────────────────────────────────────────────────
+
+export interface UpdateRepartidorInput {
+  telefono:    string
+  zona_id:     string
+  vehiculo_id: string
+}
+
+export async function updateRepartidor(id: string, input: UpdateRepartidorInput): Promise<Repartidor> {
+  const { data, error } = await supabase
+    .from('repartidores')
+    .update({
+      telefono:    input.telefono || null,
+      zona_id:     input.zona_id,
+      vehiculo_id: input.vehiculo_id,
+    })
+    .eq('id', id)
+    .select('id, nombre, apellido, ci, telefono, activo, zona_id, vehiculo_id, zonas(nombre, color), vehiculos(placa, tipo)')
+    .single()
+
+  if (error) throw new Error(error.message)
+
+  const r    = data as any
+  const zona = Array.isArray(r.zonas)    ? r.zonas[0]    : r.zonas
+  const veh  = Array.isArray(r.vehiculos) ? r.vehiculos[0] : r.vehiculos
+  return {
+    id:                 r.id,
+    nombre:             r.nombre,
+    apellido:           r.apellido,
+    ci:                 r.ci,
+    telefono:           r.telefono,
+    zona_id:            r.zona_id,
+    zona_nombre:        zona?.nombre ?? '—',
+    zona_color:         zona?.color  ?? '#94a3b8',
+    vehiculo_id:        r.vehiculo_id ?? '',
     vehiculo_placa:     veh?.placa   ?? '—',
     vehiculo_tipo:      veh?.tipo    ?? '—',
     activo:             r.activo     ?? true,
