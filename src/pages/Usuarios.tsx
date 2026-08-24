@@ -504,7 +504,7 @@ export default function Usuarios() {
                               </span>
                         }
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-5 py-3.5 whitespace-nowrap">
                         {isSelf ? (
                           <span className="text-xs text-slate-300 italic px-3">{t('usuarios.self')}</span>
                         ) : (
