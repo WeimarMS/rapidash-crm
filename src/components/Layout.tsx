@@ -21,7 +21,7 @@ export default function Layout() {
       <Sidebar expanded={expanded} onToggle={toggleSidebar} />
       <LanguageToggle />
       <div
-        className={`flex-1 ml-0 ${expanded ? 'lg:ml-56' : 'lg:ml-16'} pt-14 lg:pt-0 flex flex-col min-h-screen transition-[margin] duration-200`}
+        className={`flex-1 min-w-0 ml-0 ${expanded ? 'lg:ml-56' : 'lg:ml-16'} pt-14 lg:pt-0 flex flex-col min-h-screen transition-[margin] duration-200`}
       >
         <Outlet />
       </div>
