@@ -523,11 +523,12 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
   const lineasValidas = lineas.filter(l => l.producto_id && l.cantidad >= 1)
   const total = lineasValidas.reduce((s, l) => s + l.cantidad * l.precio_unitario, 0)
 
-  // Al elegir cliente: autocompletar su zona y resetear repartidor
+  // Al elegir cliente: autocompletar su zona y preseleccionar el primer repartidor activo de esa zona
   const handleClienteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const clienteId = e.target.value
-    const zonaId = opts?.clientes.find(c => c.id === clienteId)?.zona_id ?? ''
-    setForm(prev => ({ ...prev, cliente_id: clienteId, zona_id: zonaId, repartidor_id: '' }))
+    const zonaId    = opts?.clientes.find(c => c.id === clienteId)?.zona_id ?? ''
+    const sugerido  = opts?.repartidores.find(r => r.zona_id === zonaId)?.id ?? ''
+    setForm(prev => ({ ...prev, cliente_id: clienteId, zona_id: zonaId, repartidor_id: sugerido }))
   }
 
   // Repartidores activos de la zona del cliente (todos si aún no hay cliente)
@@ -590,6 +591,7 @@ function NuevoPedidoModal({ onClose, onSuccess }: {
                 <option value="">{form.cliente_id ? '—' : t('pedidos.pickClient')}</option>
                 {opts?.zonas.map(z => <option key={z.id} value={z.id}>{tZona(z.nombre)}</option>)}
               </select>
+              <p className="mt-1 text-[11px] text-slate-400">{t('pedidos.zoneAutoHelp')}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
